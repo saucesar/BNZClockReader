@@ -1,4 +1,4 @@
-from models._imports import *
+from _imports import *
 
 class Employee:
 
@@ -12,19 +12,6 @@ class Employee:
         self.created_at = created_at
         self.updated_at = updated_at
     
-    @staticmethod
-    def create_table_sql():
-        return '''
-                CREATE TABLE IF NOT EXISTS employees 
-                (id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(255) NOT NULL, pis VARCHAR(11) UNIQUE NOT NULL,
-                 created_at DATETIME, updated_at DATETIME)
-               '''
-    @staticmethod
-    def create_table():
-        db = Connection()
-        db.create_table(Employee.create_table_sql())
-        db.close()
-
     @staticmethod
     def create(name, pis):
         db = Connection()
