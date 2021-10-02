@@ -1,7 +1,8 @@
+import sys
+from os.path import dirname, join, abspath
+sys.path.insert(0, abspath(join(dirname(__file__), 'models')))
 from models.employee import Employee
-import logging
-
-logging.basicConfig(format='%(levelname)s %(asctime)s : %(message)s', level=logging.DEBUG)
+from log.log_config import *
 
 file_name = "/home/cesars/Dropbox/Arquivos/Projects/BNZClockPoint/AFD00009003650016557.txt"
 file = open(file_name, 'r')
