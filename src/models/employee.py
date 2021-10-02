@@ -1,4 +1,4 @@
-from _imports import *
+from models._imports import *
 
 class Employee:
 
@@ -19,11 +19,15 @@ class Employee:
                 (id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(255) NOT NULL, pis VARCHAR(11) UNIQUE NOT NULL,
                  created_at DATETIME, updated_at DATETIME)
                '''
+    @staticmethod
+    def create_table():
+        db = Connection()
+        db.create_table(Employee.create_table_sql())
+        db.close()
 
     @staticmethod
     def create(name, pis):
         db = Connection()
-        db.create_table(Employee.create_table_sql())
         created_at = datetime.now().strftime("%m/%d/%Y %H:%M:%S")
         db.insert(Employee.table, str(Employee.attributes), (name, pis, created_at, created_at))
         db.close()
