@@ -1,8 +1,8 @@
-import logging
 import sqlite3
-from datetime import datetime
-#logging.basicConfig(filename='dev.log', format='%(levelname)s %(asctime)s : %(message)s', level=logging.DEBUG)
-logging.basicConfig(format='%(levelname)s %(asctime)s : %(message)s', level=logging.DEBUG)
+import sys
+from os.path import dirname, join, abspath
+sys.path.insert(0, abspath(join(dirname(__file__), '..')))
+from log.log_config import *
 
 class Connection:
 
@@ -11,7 +11,7 @@ class Connection:
     def __init__(self) -> None:
         self.data_base_path='src/database/data_base.sqlite3'
         self.connection = sqlite3.connect(self.data_base_path)
-        logging.info(datetime.now().strftime("%m/%d/%Y %H:%M:%S")+" CONNECTION OPEN DATA BASE : "+self.data_base_path+" ")
+        logging.info("CONNECTION OPEN DATA BASE : "+self.data_base_path+" ")
         
     def create_table(self, sql):
         cursor = self.connection.cursor()
@@ -39,4 +39,4 @@ class Connection:
         
     def close(self):
         self.connection.close()
-        logging.info(datetime.now().strftime("%m/%d/%Y %H:%M:%S")+" CONNECTION CLOSE DATA BASE : "+self.data_base_path)
+        logging.info("CONNECTION CLOSE DATA BASE : "+self.data_base_path)
