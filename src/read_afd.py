@@ -1,6 +1,5 @@
-import sys
+import sys,time
 from datetime import datetime
-from os import system
 from os.path import dirname, join, abspath
 sys.path.insert(0, abspath(join(dirname(__file__), 'models')))
 sys.path.insert(0, abspath(join(dirname(__file__), 'exceptions')))
@@ -62,12 +61,32 @@ class ReadAFDFile:
             logging.error('EXCEPTION: '+ e.__class__.__name__+' MESSAGE:  '+e.__str__())
             return False
     
-    def print_percent_of_read_file(self, percent,):
-        sys.stdout.write("PERCENT FILE READED: "+str(percent)+"% "+("="*(int(percent))))
-        system('clear')
+    def print_percent_of_read_file(self, count, total, status = ''):
+        bar_len = 100
+        filled_len = int(round(bar_len * count / float(total)))
+
+        percents = round(100.0 * count / float(total), 1)
+        bar = '=' * filled_len + '-' * (bar_len - filled_len)
+
+        sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
         sys.stdout.flush()
+    
+    def start_time_count(self):
+        logging.info('START TIME COUNT: '+datetime.now().__str__());
+        self.time_start = time.time()
+    
+    def end_time_count(self):
+        self.time_end = time.time()
+        diff_in_seconds = self.time_end - self.time_start
+        minutes = int(diff_in_seconds/60)
+        logging.info('END TIME COUNT: '+datetime.now().__str__());
+        if minutes > 0:
+            return str(minutes)+" minutes "+str(round(diff_in_seconds%60, 2))+" seconds"
+        else:
+            return str(round(diff_in_seconds%60, 2))+" seconds"
 
     def read_and_save_in_database(self):
+        self.start_time_count()
         self.open_afd_file()
         file_line_amount = self.afd_file.readlines().__len__()
         percent_count = 0
@@ -75,11 +94,11 @@ class ReadAFDFile:
         lines_count = int(kv_lines.value)
 
         self.afd_file.seek(0)
-
+    
         for line in self.afd_file.readlines()[lines_count:]:
             lines_count += 1
             percent_count += 1
-            self.print_percent_of_read_file(round(percent_count/file_line_amount, 3))
+            self.print_percent_of_read_file(percent_count,file_line_amount)
             try:
                 kv_lines.value = lines_count
                 kv_lines.save()
@@ -93,6 +112,8 @@ class ReadAFDFile:
                 self.create_time_clock_marking(line)
 
         self.close_afd_file()
+        time = self.end_time_count()
+        sys.stdout.write("TIME ELAPSED: %s" % time)
 
 if __name__ == '__main__':
     readADF = ReadAFDFile('/home/cesars/Dropbox/Arquivos/Projects/BNZClockPoint/AFD00009003650016557.txt')
