@@ -1,19 +1,12 @@
+import sys
 import logging
-from connection import Connection
+from os.path import dirname, join, abspath
+sys.path.insert(0, abspath(join(dirname(__file__), '..')))
+sys.path.insert(0, abspath(join(dirname(__file__), '../models')))
+from models.employee import Employee
 
-db = Connection()
-
-tables = [
-    ''' CREATE TABLE IF NOT EXISTS employees 
-        (id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(255) NOT NULL, pis VARCHAR(11) UNIQUE NOT NULL,created_at DATETIME, updated_at DATETIME) ''',
-    ''' CREATE TABLE IF NOT EXISTS time_clock_markings 
-        (id INTEGER PRIMARY KEY AUTOINCREMENT, pis VARCHAR(11) NOT NULL, date DATE NOT NULL, time TIME NOT NULL) ''',
-]
 logging.info("START CREATING TABLES")
 
-for table in tables:
-    db.create_table(table)
+Employee.create_table()
 
 logging.info("END CREATING TABLES")
-
-db.close()
