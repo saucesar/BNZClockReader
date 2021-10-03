@@ -42,8 +42,10 @@ class TimeClockMarking(Model):
 class KeyValue(Model):
     
     id = PrimaryKeyColumn()
-    key = StringColumn()
+    key = StringColumn(unique=True)
     value = StringColumn()
+
+    AFD_LINES_READED_COUNT_KEY = 'AFD_LINES_READED_COUNT'
 
     class Meta:
         table_name = "key_values"
@@ -52,9 +54,4 @@ class KeyValue(Model):
         return "KEY: "+self.key+"\tVALUE: "+self.value
 
 if __name__ == "__main__":
-    try:
-        KeyValue.create(key='LINES_READED', value="THE VALUE")
-        k = KeyValue.get(KeyValue.key == 'LINES_READEwD')
-        print(k.value)
-    except KeyValue.KeyValueDoesNotExist as e:
-        print(e)
+    pass
