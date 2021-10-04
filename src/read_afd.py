@@ -31,7 +31,6 @@ class ReadAFDFile:
         except:
             kv = KeyValue.create(key=KeyValue.AFD_LINES_READED_COUNT_KEY, value='0')
             logging.info('CREATED LINES_READED')
-            print('LINES',kv)
             return kv
     
     def create_employee(self, line):
