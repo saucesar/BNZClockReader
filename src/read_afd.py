@@ -46,19 +46,27 @@ class ReadAFDFile:
             logging.error('EXCEPTION: '+ e.__class__.__name__+' MESSAGE:  '+e.__str__())
             return False
 
-    def create_time_clock_marking(self, line):
+    def create_time_clock_marking(self, line):    
+        pis = line[23:34]
+        date = line[14:18]+"/"+line[12:14]+"/"+line[10:12]
+        time = line[18:20]+":"+line[20:22]
+    
         try:
-            pis = line[23:34]
-            date = line[14:18]+"/"+line[12:14]+"/"+line[10:12]
-            time = line[18:20]+":"+line[20:22]
-
-            e = Employee.get(Employee.pis==pis)
-            TimeClockMarking.create(time=time,date=datetime.strptime(date, '%Y/%m/%d'), pis=pis, employee=e)
-
-            return True
+            ep = Employee.get(Employee.pis==pis)
+            tc = TimeClockMarking.get(TimeClockMarking.date == date, TimeClockMarking.employee == ep)
+            if tc.first_exit is None:
+                tc.first_exit = time
+            elif tc.second_entry is None:
+                tc.second_entry = time
+            elif tc.second_exit is None:
+                tc.second_exit = time
+            tc.save()
         except Exception as e:
+            try:
+                TimeClockMarking.create(date=date, first_entry=time, pis=pis, employee=ep)
+            except UnboundLocalError:
+                pass
             logging.error('EXCEPTION: '+ e.__class__.__name__+' MESSAGE:  '+e.__str__())
-            return False
     
     def print_percent_of_read_file(self, count, total, status = ''):
         bar_len = 100
