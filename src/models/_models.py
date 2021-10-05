@@ -6,7 +6,7 @@ from peewee import TimeField as TimeColumn
 from peewee import DateField as DateColumn
 from peewee import PrimaryKeyField as PrimaryKeyColumn
 from peewee import ForeignKeyField as ForeignKeyColumn
-from datetime import datetime;
+from datetime import datetime,date
 from calendar import monthrange
 from _imports import *
 from openpyxl import Workbook
@@ -28,8 +28,8 @@ class Employee(Model):
 
     def time_clock_marking_by_month(self, year, month):
         return TimeClockMarking.select().where(TimeClockMarking.employee == self,
-                                               TimeClockMarking.date >= datetime(year, month, 1),
-                                               TimeClockMarking.date <= datetime(year, month, monthrange(year, month)[1]), )
+                                               TimeClockMarking.date >= datetime(year, month, 1).__str__(),
+                                               TimeClockMarking.date <= datetime(year, month, monthrange(year, month)[1]).__str__())
 
     def __str__(self) -> str:
         return "ID: "+str(self.id)+" NAME: "+self.name+" PIS: "+self.pis+" CREATED_AT: "+self.created_at.__str__()+" UPDATED_AT: "+self.updated_at.__str__()
@@ -50,10 +50,10 @@ class TimeClockMarking(Model):
     def __str__(self):
         return "DATE: {}  MARKINGS: {} {} {} {} PIS: {}".format(
             self.date,
-            '' if self.first_entry is None else self.first_entry,
-            '' if self.first_exit is None else self.first_exit,
-            '' if self.second_entry is None else self.second_entry,
-            '' if self.second_exit is None else self.second_exit,
+            '        ' if self.first_entry is None else self.first_entry,
+            '        ' if self.first_exit is None else self.first_exit,
+            '        ' if self.second_entry is None else self.second_entry,
+            '        ' if self.second_exit is None else self.second_exit,
             self.pis)
 
 class KeyValue(Model):
@@ -82,12 +82,24 @@ class Spreadsheet:
         database = workbook.active
         database.title = 'database'
         
-        database.append(['PIS', 'DATA', 'HORA'])
-
-        for e in Employee.select():
+        database.append(['PIS', 'DATA', 'E1', 'S1', 'E2', 'S2'])
+        employees = Employee.select()
+        count = 0
+        total = employees.__len__()
+        for e in employees:
+            self.print_percent_of_read_file(count, total)
             for t in e.time_clock_marking_by_month(year, month):
-                database.append([e.pis, t.date, t.time])
-        workbook.save("{}-{}.xlsx".format(Spreadsheet.months[month], str(year)))
+                database.append([e.pis, t.date, t.first_entry, t.first_exit, t.second_entry, t.second_exit])
+        workbook.save("{} {}.xlsx".format(Spreadsheet.months[month], str(year)))
 
+    def print_percent_of_read_file(self, count, total, status = ''):
+        bar_len = 100
+        filled_len = int(round(bar_len * count / float(total)))
+
+        percents = round(100.0 * count / float(total), 1)
+        bar = '=' * filled_len + '-' * (bar_len - filled_len)
+
+        sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
+        sys.stdout.flush()
 if __name__ == '__main__':
-    Spreadsheet().save_month_db_spreadsheet(2019, 8)
+    Spreadsheet().save_month_db_spreadsheet(2019, 9)
