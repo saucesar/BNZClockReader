@@ -1,4 +1,5 @@
 import sys,time
+from rich.progress import track
 from datetime import datetime
 from os.path import dirname, join, abspath
 sys.path.insert(0, abspath(join(dirname(__file__), 'models')))
@@ -48,12 +49,12 @@ class ReadAFDFile:
 
     def create_time_clock_marking(self, line):    
         pis = line[23:34]
-        date = line[14:18]+"/"+line[12:14]+"/"+line[10:12]
+        date = {'y':int(line[14:18]), 'm':int(line[12:14]),"d":int(line[10:12])}
         time = line[18:20]+":"+line[20:22]
     
         try:
             ep = Employee.get(Employee.pis==pis)
-            tc = TimeClockMarking.get(TimeClockMarking.date == date, TimeClockMarking.employee == ep)
+            tc = TimeClockMarking.get(TimeClockMarking.date == datetime(date['y'], date['m'], date['d']), TimeClockMarking.employee == ep)
             if tc.first_exit is None:
                 tc.first_exit = time
             elif tc.second_entry is None:
@@ -63,20 +64,10 @@ class ReadAFDFile:
             tc.save()
         except Exception as e:
             try:
-                TimeClockMarking.create(date=date, first_entry=time, pis=pis, employee=ep)
+                TimeClockMarking.create(date=datetime(date['y'], date['m'], date['d']), first_entry=time, pis=pis, employee=ep)
             except UnboundLocalError:
                 pass
             logging.error('EXCEPTION: '+ e.__class__.__name__+' MESSAGE:  '+e.__str__())
-    
-    def print_percent_of_read_file(self, count, total, status = ''):
-        bar_len = 100
-        filled_len = int(round(bar_len * count / float(total)))
-
-        percents = round(100.0 * count / float(total), 1)
-        bar = '=' * filled_len + '-' * (bar_len - filled_len)
-
-        sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
-        sys.stdout.flush()
     
     def start_time_count(self):
         logging.info('START TIME COUNT: '+datetime.now().__str__());
@@ -91,6 +82,12 @@ class ReadAFDFile:
             return str(minutes)+" minutes "+str(round(diff_in_seconds%60, 2))+" seconds"
         else:
             return str(round(diff_in_seconds%60, 2))+" seconds"
+    
+    def jump_lines(self, amount):
+        j = 0
+        while(j < amount):
+            self.afd_file.readline()
+            j += 1
 
     def read_and_save_in_database(self):
         self.start_time_count()
@@ -101,11 +98,14 @@ class ReadAFDFile:
         lines_count = int(kv_lines.value)
 
         self.afd_file.seek(0)
+        self.jump_lines(lines_count)
     
-        for line in self.afd_file.readlines()[lines_count:]:
+        for t in track(range(file_line_amount - lines_count), 'Lendo marcações...'):
             lines_count += 1
             percent_count += 1
-            self.print_percent_of_read_file(percent_count,file_line_amount)
+            self.afd_file
+            line = self.afd_file.readline()
+            
             try:
                 kv_lines.value = lines_count
                 kv_lines.save()
