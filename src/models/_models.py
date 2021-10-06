@@ -1,15 +1,9 @@
-from peewee import Model as BaseModel
-from peewee import SqliteDatabase as Connection
-from peewee import CharField as StringColumn
-from peewee import TimestampField as TimestampColumn
-from peewee import TimeField as TimeColumn
-from peewee import DateField as DateColumn
-from peewee import PrimaryKeyField as PrimaryKeyColumn
-from peewee import ForeignKeyField as ForeignKeyColumn
+from _peewee_orm import *
+from _imports import *
+from _openpyxl import *
 from datetime import datetime,date
 from calendar import monthrange
-from _imports import *
-from openpyxl import Workbook
+from rich.progress import track
 
 class Model(BaseModel):
     class Meta:
@@ -79,27 +73,38 @@ class Spreadsheet:
 
     def save_month_db_spreadsheet(self, year, month):
         workbook = Workbook()
-        database = workbook.active
-        database.title = 'database'
-        
-        database.append(['PIS', 'DATA', 'E1', 'S1', 'E2', 'S2'])
+        workbook.iso_dates = True
+        markings = workbook.active
+        markings.title = 'markings'
+
+        tab = Table(displayName="Marcações", ref="A1:H5")
+        tab.tableStyleInfo = TableStyleInfo(name="TableStyleMedium9", showFirstColumn=True, showLastColumn=True, showRowStripes=True, showColumnStripes=True)
+
+        markings.append(['NOME', 'DATA', 'E1', 'S1', 'E2', 'S2', '1ª JORNADA', 'ALMOÇO'])
         employees = Employee.select()
         count = 0
         total = employees.__len__()
-        for e in employees:
-            self.print_percent_of_read_file(count, total)
+
+        for progress in track(range(total), 'Processando marcações'):
+            e = employees[progress]
             for t in e.time_clock_marking_by_month(year, month):
-                database.append([e.pis, t.date, t.first_entry, t.first_exit, t.second_entry, t.second_exit])
+                markings.append([e.name, t.date, t.first_entry, t.first_exit, t.second_entry, t.second_exit,\
+                                 self.calc_time_diff(t.first_entry, t.first_exit),\
+                                 self.calc_time_diff(t.first_exit, t.second_entry)
+                                ])
+            count += 1
+
+        markings.add_table(tab)
         workbook.save("{} {}.xlsx".format(Spreadsheet.months[month], str(year)))
 
-    def print_percent_of_read_file(self, count, total, status = ''):
-        bar_len = 100
-        filled_len = int(round(bar_len * count / float(total)))
+    def calc_time_diff(self, start_time, end_time):
+        if start_time is None or end_time is None: return ''
 
-        percents = round(100.0 * count / float(total), 1)
-        bar = '=' * filled_len + '-' * (bar_len - filled_len)
+        d = date(1,1,1)
+        start_date = datetime.combine(d, start_time)
+        end_date = datetime.combine(d, end_time)
 
-        sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percents, '%', status))
-        sys.stdout.flush()
+        return end_date - start_date
+
 if __name__ == '__main__':
     Spreadsheet().save_month_db_spreadsheet(2019, 9)
