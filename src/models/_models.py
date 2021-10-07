@@ -77,7 +77,7 @@ class Spreadsheet:
         markings = workbook.active
         markings.title = 'markings'
 
-        tab = Table(displayName="Marcações", ref="A1:H5")
+        tab = Table(displayName="Marcações", ref="A1:H50000")
         tab.tableStyleInfo = TableStyleInfo(name="TableStyleMedium9", showFirstColumn=True, showLastColumn=True, showRowStripes=True, showColumnStripes=True)
 
         markings.append(['NOME', 'DATA', 'E1', 'S1', 'E2', 'S2', '1ª JORNADA', 'ALMOÇO'])
