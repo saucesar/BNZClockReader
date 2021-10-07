@@ -57,6 +57,7 @@ class KeyValue(Model):
     value = StringColumn()
 
     AFD_LINES_READED_COUNT_KEY = 'AFD_LINES_READED_COUNT'
+    AFD_FILE_PATH = 'AFD_FILE_PATH'
 
     class Meta:
         table_name = "key_values"
