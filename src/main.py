@@ -1,8 +1,10 @@
 import sys
 from os.path import dirname, join, abspath
 sys.path.insert(0, abspath(join(dirname(__file__), 'models')))
+sys.path.insert(0, abspath(join(dirname(__file__), 'database')))
 from models._models import Spreadsheet as Excel
 from read_afd import ReadAFDFile
+from database.create_tables import *
 from rich import print
 from rich.layout import Layout
 from rich.console import Console
@@ -16,7 +18,8 @@ class Main:
         self.layout = Layout(name="Menu")
         msg = "1 - Ler Arquide AFD\n2 - Gerar Planilha de Marcações\n99 - Sair\n"
         options = Layout(name='Opções', renderable=self.create_panel_option(msg))
-        self.layout.split_row(options, Layout(name=''))
+        self.layout.split_row(options, Layout(name='', renderable= self.create_panel_option('')))
+        TableManager().create_tables()
 
     def create_panel_option(self, option):
         return Panel(Text(option))
