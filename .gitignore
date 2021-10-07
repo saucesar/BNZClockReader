@@ -1,6 +1,9 @@
+src/dist/*
+src/build/*
 *.txt
 *.pyc
 *.sqlite3
 *.sqlite3-journal
 *.log
 *.xlsx
+*.spec
