@@ -95,6 +95,11 @@ class ReadAFDFile:
         file_line_amount = self.afd_file.readlines().__len__()
         percent_count = 0
         kv_lines = self.get_afd_lines_key_value()
+        try:
+            KeyValue.create(key=KeyValue.AFD_FILE_PATH, value=self.file_path)
+        except:
+            pass
+
         lines_count = int(kv_lines.value)
 
         self.afd_file.seek(0)
