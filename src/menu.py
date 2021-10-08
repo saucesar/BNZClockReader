@@ -1,11 +1,8 @@
 import sys
-from os.path import dirname, join, abspath
 from PySimpleGUI.PySimpleGUI import Slider
-sys.path.insert(0, abspath(join(dirname(__file__), '..')))
-sys.path.insert(0, abspath(join(dirname(__file__), 'facade')))
 import PySimpleGUI as sg
 from main import Main
-from facade.facade import Facade
+from facade import Facade
 from datetime import datetime
 
 class MenuScreen:
