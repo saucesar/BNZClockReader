@@ -9,8 +9,9 @@ from exceptions.peewee_exceptions import *
 from log.log_config import *
 
 class ReadAFDFile:
-    def __init__(self, afd_file_path) -> None:
+    def __init__(self, afd_file_path, progressBar = None) -> None:
         self.file_path = afd_file_path
+        self.progressBar = progressBar
         
     def open_afd_file(self):
         try:
@@ -104,12 +105,14 @@ class ReadAFDFile:
 
         self.afd_file.seek(0)
         self.jump_lines(lines_count)
-    
-        for t in track(range(file_line_amount - lines_count), 'Lendo marcações...'):
+        range_size = file_line_amount - lines_count
+        
+        for i in track(range(range_size), description='Lendo arquivo...'):
             lines_count += 1
             percent_count += 1
-            self.afd_file
             line = self.afd_file.readline()
+            if not self.progressBar is None:
+                self.progressBar.update(i*100/range_size)
             
             try:
                 kv_lines.value = lines_count
