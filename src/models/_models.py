@@ -1,7 +1,7 @@
 from _peewee_orm import *
 from _imports import *
 from _openpyxl import *
-from datetime import datetime,date
+from datetime import datetime,date, timedelta
 from calendar import monthrange
 from rich.progress import track
 
@@ -68,6 +68,7 @@ class KeyValue(Model):
 class Spreadsheet:
     
     months = {1:'JAN',2:'FEV',3:'MAR',4:'ABR',5:'MAI',6:'JUN',7:'JUL',8:'AGO',9:'SET',10:'OUT',11:'NOV',12:'DEZ',}
+    weekdays = {0:'SEG',1:'TER',2:'QUA',3:'QUI',4:'SEX',5:'SAB',6:'DOM'}
 
     def __init__(self) -> None:
         pass
@@ -78,21 +79,27 @@ class Spreadsheet:
         markings = workbook.active
         markings.title = 'markings'
 
-        tab = Table(displayName="Marcações", ref="A1:H50000")
+        tab = Table(displayName="Marcações", ref="A1:K50000")
         tab.tableStyleInfo = TableStyleInfo(name="TableStyleMedium9", showFirstColumn=True, showLastColumn=True, showRowStripes=True, showColumnStripes=True)
 
-        markings.append(['NOME', 'DATA', 'E1', 'S1', 'E2', 'S2', '1ª JORNADA', 'ALMOÇO'])
+        markings.append(['NOME', 'DIA','DATA', 'E1', 'S1', 'E2', 'S2', '1ª JORNADA', 'ALMOÇO', 'INT.ENTRE.JORNADAS', 'HORA. EXTRA'])
         employees = Employee.select()
         count = 0
         total = employees.__len__()
 
         for progress in track(range(total), 'Processando marcações'):
             e = employees[progress]
+            previous = None
             for t in e.time_clock_marking_by_month(year, month):
-                markings.append([e.name, t.date, t.first_entry, t.first_exit, t.second_entry, t.second_exit,\
-                                 self.calc_time_diff(t.first_entry, t.first_exit),\
-                                 self.calc_time_diff(t.first_exit, t.second_entry)
-                                ])
+                row = [e.name, Spreadsheet.weekdays[t.date.weekday()], t.date, t.first_entry, t.first_exit, t.second_entry, t.second_exit,\
+                       self.calc_time_diff(t.first_entry, t.first_exit),\
+                       self.calc_time_diff(t.first_exit, t.second_entry),\
+                       self.calc_break_working_hours(previous, t),\
+                       self.calc_extra_hour(t)
+                    ]
+                markings.append(row)
+                previous = t
+
             count += 1
 
         markings.add_table(tab)
@@ -107,5 +114,32 @@ class Spreadsheet:
 
         return end_date - start_date
 
+    def calc_break_working_hours(self, previous, today):
+        if previous is None or previous.second_exit is None or today is None or today.first_entry is None:
+            return 'N/A'
+        else:
+            start = datetime.combine(previous.date, previous.second_exit)
+            end = datetime.combine(today.date, today.first_entry)
+
+            return end - start
+
+    def calc_extra_hour(self, time_clock_marking):
+        if time_clock_marking.first_entry is None or time_clock_marking.second_exit is None:
+            return ''
+        seven_hours_worked = [0,1,2,3]# SEG a QUI
+        day_of_week = time_clock_marking.date.weekday()
+
+        d = date(1,1,1)
+        start = datetime.combine(d, time_clock_marking.first_entry)
+        end = datetime.combine(d, time_clock_marking.second_exit)
+        hours_of_lunch = datetime.combine(d, time_clock_marking.second_entry) - datetime.combine(d, time_clock_marking.first_exit)
+
+        worked_hours = (end - start)-hours_of_lunch
+
+        if day_of_week in seven_hours_worked:
+            return worked_hours - timedelta(hours=7)
+        else:
+            return worked_hours - timedelta(hours=8)
+
 if __name__ == '__main__':
-    Spreadsheet().save_month_db_spreadsheet(2019, 9)
+    Spreadsheet().save_month_db_spreadsheet(2021, 1)
