@@ -1,11 +1,11 @@
 import sys,time
 from os.path import dirname, join, abspath
 sys.path.insert(0, abspath(join(dirname(__file__), 'models')))
-sys.path.insert(0, abspath(join(dirname(__file__), 'database')))
 from models._models import Spreadsheet as Excel
 from models._models import KeyValue
 from read_afd import ReadAFDFile
 from database.create_tables import *
+from models._models import Spreadsheet as Excel
 
 class Facade:
     def __init__(self) -> None:
@@ -19,3 +19,10 @@ class Facade:
 
         readADF = ReadAFDFile(afd_file_path=afd_path, progressBar=progressBar)
         readADF.read_and_save_in_database()
+    
+    def create_spreadsheet(self, month, year, progressBar = None):
+        if not progressBar is None:
+            progressBar.update(50)
+        Excel().save_month_db_spreadsheet(int(year), int(month))
+        if not progressBar is None:
+            progressBar.update(100)
