@@ -70,8 +70,9 @@ class ReadAFDScreen(MenuScreen):
                 if values['afd_file'] != '':
                     self.window['progressBar'].update(visible=True, current_count=0)
                     self.window.Element('progressText').update('Lendo arquivo... Aguarde...')
-                    sg.popup_notify(title='Lendo arquivo, aguarde ...', display_duration_in_ms=1500)
+                    sg.popup_notify(title='Lendo arquivo, aguarde ...', display_duration_in_ms=1500, location=(500,100))
                     self.facade.read_afd(values['afd_file'], self.window['progressBar'])
+                    sg.popup_notify(title='Leitura do arquivo concluída.', display_duration_in_ms=1500, location=(500,100))
                 else:
                     sg.popup_error('Selecione o arquivo AFD')
             if event == 'exit':
