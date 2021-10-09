@@ -129,7 +129,3 @@ class ReadAFDFile:
         self.close_afd_file()
         time = self.end_time_count()
         sys.stdout.write("TIME ELAPSED: %s" % time)
-
-if __name__ == '__main__':
-    readADF = ReadAFDFile('/home/cesars/Dropbox/Arquivos/Projects/BNZClockPoint/AFD00009003650016557.txt')
-    readADF.read_and_save_in_database()

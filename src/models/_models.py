@@ -140,6 +140,3 @@ class Spreadsheet:
             return worked_hours - timedelta(hours=7)
         else:
             return worked_hours - timedelta(hours=8)
-
-if __name__ == '__main__':
-    Spreadsheet().save_month_db_spreadsheet(2021, 1)
