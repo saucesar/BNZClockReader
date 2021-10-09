@@ -17,6 +17,3 @@ class TableManager:
         KeyValue.create_table()
 
         logging.info("END CREATING TABLES")
-
-if __name__ == '__main__':
-    TableManager().create_tables()
