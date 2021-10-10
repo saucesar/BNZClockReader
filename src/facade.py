@@ -1,4 +1,4 @@
-import sys,time
+import sys
 from os.path import dirname, join, abspath
 sys.path.insert(0, abspath(join(dirname(__file__), 'models')))
 from models._models import Spreadsheet as Excel
@@ -12,10 +12,10 @@ class Facade:
     def read_afd(self, afd_file_path, progressBar):
         ReadAFDFile(afd_file_path=afd_file_path, progressBar=progressBar).read_and_save_in_database()
     
-    def create_spreadsheet(self, month, year, progressBar = None):
+    def create_spreadsheet(self, month, year, destiny_folder, progressBar = None):
         if not progressBar is None:
             progressBar.update(50)
-        Excel().save_month_db_spreadsheet(int(year), int(month))
+        Excel().save_month_db_spreadsheet(int(year), int(month), destiny_folder)
         if not progressBar is None:
             progressBar.update(100)
     
@@ -39,5 +39,8 @@ class Facade:
             kv.save()
     
     def get_spreadsheet_folder(self):
-        return KeyValue.create(KeyValue.key == KeyValue.DEFAULT_SPREADSHEET_FOLDER).value
+        try:
+            return KeyValue.get(KeyValue.key == KeyValue.DEFAULT_SPREADSHEET_FOLDER).value
+        except:
+            return ''
         
