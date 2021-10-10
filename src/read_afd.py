@@ -96,6 +96,7 @@ class ReadAFDFile:
         file_line_amount = self.afd_file.readlines().__len__()
         percent_count = 0
         kv_lines = self.get_afd_lines_key_value()
+        
         try:
             KeyValue.create(key=KeyValue.AFD_FILE_PATH, value=self.file_path)
         except:
@@ -112,7 +113,7 @@ class ReadAFDFile:
             percent_count += 1
             line = self.afd_file.readline()
             if not self.progressBar is None:
-                self.progressBar.update(i*100/range_size)
+                self.progressBar.update(current_count=(i*100/range_size))
             
             try:
                 kv_lines.value = lines_count
