@@ -12,13 +12,7 @@ class Facade:
         pass
 
     def read_afd(self, afd_file_path, progressBar):
-        try:
-            afd_path = KeyValue.get(KeyValue.key == KeyValue.AFD_FILE_PATH).value
-        except:
-            afd_path = afd_file_path
-
-        readADF = ReadAFDFile(afd_file_path=afd_path, progressBar=progressBar)
-        readADF.read_and_save_in_database()
+        ReadAFDFile(afd_file_path=afd_file_path, progressBar=progressBar).read_and_save_in_database()
     
     def create_spreadsheet(self, month, year, progressBar = None):
         if not progressBar is None:
@@ -26,3 +20,14 @@ class Facade:
         Excel().save_month_db_spreadsheet(int(year), int(month))
         if not progressBar is None:
             progressBar.update(100)
+    
+    def save_afd_file_path(self, afd_path):
+        try:
+            KeyValue.create(key=KeyValue.AFD_FILE_PATH, value=self.file_path)
+        except:
+            kv = KeyValue.get(KeyValue.key == KeyValue.AFD_FILE_PATH)
+            kv.value = afd_path
+            kv.save()
+    
+    def get_afd_file_path(self):
+        return KeyValue.get(KeyValue.key == KeyValue.AFD_FILE_PATH).value
