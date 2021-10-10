@@ -201,7 +201,6 @@ class FolderSelect(Screen):
 
             elif event == 'exit' or event == sg.WIN_CLOSED:
                 break
-            print(values)
 
         self.window.close()
 
@@ -231,20 +230,28 @@ class CreateSpreadsheet(Screen):
     def show(self):
         while True:
             event, values = self.window.read()
-
+                
             if event == 'ok':
+                destiny_folder = self.facade.get_spreadsheet_folder()
+                
+                if destiny_folder == '' or destiny_folder is None:
+                    FolderSelect(self.facade).show()
+                    destiny_folder = self.facade.get_spreadsheet_folder()
+
                 try:
                     year = int(values['year'][0])
                     month = CreateSpreadsheet.months[values['month'][0]]
+                        
                     self.window['progressBar'].update(visible=True, current_count=0)
 
-                    self.facade.create_spreadsheet(month, year, self.window['progressBar'])
-                    sg.popup_notify(title='Planilha gerada', display_duration_in_ms=3000, location=(500,100))
+                    self.facade.create_spreadsheet(month, year, destiny_folder, self.window['progressBar'])
+                    sg.popup_notify(title='Planilha gerada\nSalva em {}'.format(destiny_folder), display_duration_in_ms=3000, location=(500,100))
                 except:
-                    sg.popup_notify(title='Selecione o Mês e o Ano', location=(500, 200))
+                    pass
 
-            if event == 'exit' or event == sg.WIN_CLOSED:
+            elif event == 'exit' or event == sg.WIN_CLOSED:
                 break
+
         self.window.close()
         
     def get_layout(self):
