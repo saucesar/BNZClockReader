@@ -17,11 +17,11 @@ class Screen:
     def show_error(self, msg, duration_in_seconds=1):
         sg.popup_notify(title=msg, display_duration_in_ms=duration_in_seconds*1000, location=(500,100))
 
-    def set_size(self, size=(600, 500)):
+    def set_size(self, size=(700, 500)):
         return size
 
     def get_window(self):
-        return sg.Window(self.title, self.layout, size=self.set_size(), margins=(50, 50), location=(400,100), element_justification='c', resizable=True, finalize=True)
+        return sg.Window(self.title, self.layout, size=self.set_size(), margins=(50, 50), location=(300,100), element_justification='c', resizable=True, finalize=True)
 
     def oKbutton(self, btn_key='ok', btn_tooltype = ''):
         return sg.Button('', key=btn_key, tooltip=btn_tooltype, image_filename='src/assets/confirm-96px.png')
@@ -33,7 +33,7 @@ class MenuScreen(Screen):
 
     READ_AFD_FILE = 'Ler Arquivo AFD'
     CHANGE_AFD_PATH = 'Alterar arquivo AFD'
-    CHOOSE_SPREADSHEET_PATH = 'Pasta padrão de Planilhas'
+    CHOOSE_SPREADSHEET_PATH = 'Alterar pasta destino de Planilhas'
     ABOUT = 'Sobre'
     CREATE_SPREADSHEET = 'Gerar Planilha'
     EXIT = 'Sair'
@@ -90,6 +90,7 @@ class MenuScreen(Screen):
                 sg.Button('', key=MenuScreen.READ_AFD_FILE, tooltip='Ler Arquivo AFD', size=(20, 10), image_filename='src/assets/file3-96px.png'),
                 sg.Button('', key=MenuScreen.CHANGE_AFD_PATH, tooltip='Alterar arquivo AFD', size=(20, 10), image_filename='src/assets/change-file-96px.png'),
                 sg.Button('', key=MenuScreen.CREATE_SPREADSHEET, tooltip='Gerar Planilha', size=(20, 10), image_filename='src/assets/excel-96px.png'),
+                sg.Button('', key=MenuScreen.CHOOSE_SPREADSHEET_PATH, tooltip='Selecionar pasta destino de Planilhas', size=(20, 10), image_filename='src/assets/folder-96px.png'),
                 sg.Button('', key=MenuScreen.EXIT, tooltip='Sair do Sistema', size=(20,10), image_filename='src/assets/exit2-96px.png'),
             ],
             [ sg.Image(source='src/assets/clock2.png', size=(100,100),key="image", expand_x=True, expand_y=True)],
