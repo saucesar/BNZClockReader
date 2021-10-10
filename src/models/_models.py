@@ -4,6 +4,7 @@ from _openpyxl import *
 from datetime import datetime,date, timedelta
 from calendar import monthrange
 from rich.progress import track
+import os
 
 class Model(BaseModel):
     class Meta:
@@ -57,7 +58,8 @@ class KeyValue(Model):
     value = StringColumn()
 
     AFD_LINES_READED_COUNT_KEY = 'AFD_LINES_READED_COUNT'
-    AFD_FILE_PATH = 'AFD_FILE_PATH'
+    AFD_FILE_PATH = 'DEFAULT_AFD_FILE_PATH'
+    DEFAULT_SPREADSHEET_FOLDER = 'DEFAULT_SPREADSHEET_FOLDER'
 
     class Meta:
         table_name = "key_values"
@@ -73,7 +75,7 @@ class Spreadsheet:
     def __init__(self) -> None:
         pass
 
-    def save_month_db_spreadsheet(self, year, month):
+    def save_month_db_spreadsheet(self, year, month, destiny_folder):
         workbook = Workbook()
         workbook.iso_dates = True
         markings = workbook.active
@@ -103,7 +105,13 @@ class Spreadsheet:
             count += 1
 
         markings.add_table(tab)
-        workbook.save("{} {}.xlsx".format(Spreadsheet.months[month], str(year)))
+
+        if os.name == 'posix':
+            destiny_folder += '/'
+        elif os.name == 'nt':
+            destiny_folder += '\\'
+        
+        workbook.save("{}{}_{}.xlsx".format(destiny_folder, Spreadsheet.months[month], str(year)))
 
     def calc_time_diff(self, start_time, end_time):
         if start_time is None or end_time is None: return ''
