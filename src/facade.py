@@ -21,7 +21,7 @@ class Facade:
     
     def save_afd_file_path(self, afd_path):
         try:
-            KeyValue.create(key=KeyValue.AFD_FILE_PATH, value=self.file_path)
+            KeyValue.create(key=KeyValue.AFD_FILE_PATH, value=afd_path)
         except:
             kv = KeyValue.get(KeyValue.key == KeyValue.AFD_FILE_PATH)
             kv.value = afd_path
@@ -29,3 +29,15 @@ class Facade:
     
     def get_afd_file_path(self):
         return KeyValue.get(KeyValue.key == KeyValue.AFD_FILE_PATH).value
+
+    def save_spreadsheet_folder(self, spreadsheet_folder):
+        try:
+            KeyValue.create(key=KeyValue.DEFAULT_SPREADSHEET_FOLDER, value=spreadsheet_folder)
+        except:
+            kv = KeyValue.get(KeyValue.key == KeyValue.DEFAULT_SPREADSHEET_FOLDER)
+            kv.value = spreadsheet_folder
+            kv.save()
+    
+    def get_spreadsheet_folder(self):
+        return KeyValue.create(KeyValue.key == KeyValue.DEFAULT_SPREADSHEET_FOLDER).value
+        
