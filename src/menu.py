@@ -33,6 +33,7 @@ class MenuScreen(Screen):
 
     READ_AFD_FILE = 'Ler Arquivo AFD'
     CHANGE_AFD_PATH = 'Alterar arquivo AFD'
+    CHOOSE_SPREADSHEET_PATH = 'Pasta padrão de Planilhas'
     ABOUT = 'Sobre'
     CREATE_SPREADSHEET = 'Gerar Planilha'
     EXIT = 'Sair'
@@ -52,6 +53,8 @@ class MenuScreen(Screen):
                 ReadAFDScreen(facade=self.facade).show()
             elif event == MenuScreen.CREATE_SPREADSHEET:
                 CreateSpreadsheet(facade=self.facade).show()
+            elif event == MenuScreen.CHOOSE_SPREADSHEET_PATH:
+                FolderSelect(facade=self.facade).show()
             elif event == MenuScreen.CHANGE_AFD_PATH:
                 self.change_afd_file_path()
             elif event == MenuScreen.ABOUT:
@@ -59,9 +62,7 @@ class MenuScreen(Screen):
             elif event == 'exit' or event == sg.WIN_CLOSED or event == MenuScreen.EXIT:
                 break
 
-        exit()
-        #sys.exit(0)
-        #self.window.close()
+        self.window.close()
 
     def show_about(self):
         sg.popup('About this program', 'Version 1.0', 'PySimpleGUI rocks...', location=(500,100))
@@ -80,7 +81,7 @@ class MenuScreen(Screen):
 
     def get_layout(self):
         menu_options = [
-            ['Menu', [ MenuScreen.READ_AFD_FILE, MenuScreen.CHANGE_AFD_PATH, MenuScreen.CREATE_SPREADSHEET, MenuScreen.ABOUT, MenuScreen.EXIT],],
+            ['Menu', [ MenuScreen.READ_AFD_FILE, MenuScreen.CHANGE_AFD_PATH, MenuScreen.CHOOSE_SPREADSHEET_PATH, MenuScreen.CREATE_SPREADSHEET, MenuScreen.ABOUT, MenuScreen.EXIT],],
         ]
 
         layout = [
@@ -175,6 +176,44 @@ class FileSelect(Screen):
             ],
             [
                 self.oKbutton(btn_tooltype='Pressione ok Para ler o arquivo'),
+                self.exitButton(btn_tooltype='Sair desta tela.'),
+            ],
+        ]
+
+class FolderSelect(Screen):
+    
+    def __init__(self, facade = None) -> None:
+        self.layout = self.get_layout()
+        self.title = 'Pasta padrão para planilhas'
+        self.window = self.get_window()
+        self.facade = facade
+
+    def show(self):
+        while True:
+            event, values = self.window.read()
+            if event == 'ok':
+                if values['spreadsheet_path'] == '' or values['spreadsheet_path'] is None:
+                    self.show_error('Selecione uma pasta.')
+                else:
+                    self.facade.save_spreadsheet_folder(values['spreadsheet_path'])
+                    self.show_notifycation('Pasta padrão selecionada.')
+                    break
+
+            elif event == 'exit' or event == sg.WIN_CLOSED:
+                break
+            print(values)
+
+        self.window.close()
+
+    def get_layout(self):
+        return [
+            [sg.Text(text="Selecione a Pasta",font=30)],
+            [
+                sg.Text(text="Selecione a pasta: "),
+                sg.FolderBrowse(button_text='Selecione', key='spreadsheet_path', tooltip='Salvar a planilha em ...', ),
+            ],
+            [
+                self.oKbutton(btn_tooltype='Selecionar esta pasta'),
                 self.exitButton(btn_tooltype='Sair desta tela.'),
             ],
         ]
