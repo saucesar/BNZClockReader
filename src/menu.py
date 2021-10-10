@@ -1,4 +1,4 @@
-import sys
+import sys,os
 import PySimpleGUI as sg
 from os.path import dirname, join, abspath
 sys.path.insert(0, abspath(join(dirname(__file__), '..')))
@@ -8,9 +8,20 @@ from datetime import datetime
 from database.create_tables import TableManager
 
 class Screen:
-    
+    def show(self):
+        sg.popup_notify(title='Implement Show in {}'.format(self.__class__.__name__), display_duration_in_ms=1000, location=(500,100))
+
+    def show_notifycation(self, msg, duration_in_seconds=1):
+        sg.popup_notify(title=msg, display_duration_in_ms=duration_in_seconds*1000, location=(500,100))
+
+    def show_error(self, msg, duration_in_seconds=1):
+        sg.popup_notify(title=msg, display_duration_in_ms=duration_in_seconds*1000, location=(500,100))
+
+    def set_size(self, size=(600, 500)):
+        return size
+
     def get_window(self):
-        return sg.Window(self.title, self.layout, size=(600, 500), margins=(100, 50), location=(400,100), element_justification='c', resizable=True, finalize=True)
+        return sg.Window(self.title, self.layout, size=self.set_size(), margins=(50, 50), location=(400,100), element_justification='c', resizable=True, finalize=True)
 
     def oKbutton(self, btn_key='ok', btn_tooltype = ''):
         return sg.Button('', key=btn_key, tooltip=btn_tooltype, image_filename='src/assets/confirm-96px.png')
@@ -19,6 +30,12 @@ class Screen:
         return sg.Button('', key=btn_key, tooltip=btn_tooltype, image_filename='src/assets/exit3-96px.png')
 
 class MenuScreen(Screen):
+
+    READ_AFD_FILE = 'Ler Arquivo AFD'
+    CHANGE_AFD_PATH = 'Alterar arquivo AFD'
+    ABOUT = 'Sobre'
+    CREATE_SPREADSHEET = 'Gerar Planilha'
+    EXIT = 'Sair'
 
     def __init__(self) -> None:
         sg.theme('Tan')
@@ -31,28 +48,48 @@ class MenuScreen(Screen):
     def show(self):
         while True:
             event, values = self.window.read()
-            if event == 'readAFDFile':
+            if event == MenuScreen.READ_AFD_FILE:
                 ReadAFDScreen(facade=self.facade).show()
-            if event == 'createSpreadsheet':
+            elif event == MenuScreen.CREATE_SPREADSHEET:
                 CreateSpreadsheet(facade=self.facade).show()
-            if event == 'exit' or event == sg.WIN_CLOSED:
+            elif event == MenuScreen.CHANGE_AFD_PATH:
+                self.change_afd_file_path()
+            elif event == MenuScreen.ABOUT:
+                self.show_about()
+            elif event == 'exit' or event == sg.WIN_CLOSED or event == MenuScreen.EXIT:
                 break
-        self.window.close()
+
+        exit()
+        #sys.exit(0)
+        #self.window.close()
+
+    def show_about(self):
+        sg.popup('About this program', 'Version 1.0', 'PySimpleGUI rocks...', location=(500,100))
+
+    def change_afd_file_path(self):
+        try:
+            afd_path = FileSelect(facade=self.facade).show()
+            if afd_path == '' or afd_path is None:
+                pass
+            else:
+                self.facade.save_afd_file_path(afd_path)
+                self.show_error('Modificação salva\n Novo arquivo:{}'.format(afd_path))
+        except Exception as e:
+            sg.popup_error()
+            self.show_notifycation(e.__str__())
 
     def get_layout(self):
         menu_options = [
-            ['Opções', ['Alterar arquivo AFD']],
-            ['Sair',]
+            ['Menu', [ MenuScreen.READ_AFD_FILE, MenuScreen.CHANGE_AFD_PATH, MenuScreen.CREATE_SPREADSHEET, MenuScreen.ABOUT, MenuScreen.EXIT],],
         ]
 
         layout = [
+            [ sg.Menu(menu_options) ],
             [
-                sg.Menu(menu_options)
-            ],
-            [
-                sg.Button('', key='readAFDFile', tooltip='Ler Arquivo AFD', size=(20, 10), image_filename='src/assets/file3-96px.png'),
-                sg.Button('', key='createSpreadsheet', tooltip='Gerar Planilha', size=(20, 10), image_filename='src/assets/excel-96px.png'),
-                sg.Button('', key='exit', tooltip='Sair do Sistema', size=(20,10), image_filename='src/assets/exit2-96px.png'),
+                sg.Button('', key=MenuScreen.READ_AFD_FILE, tooltip='Ler Arquivo AFD', size=(20, 10), image_filename='src/assets/file3-96px.png'),
+                sg.Button('', key=MenuScreen.CHANGE_AFD_PATH, tooltip='Alterar arquivo AFD', size=(20, 10), image_filename='src/assets/change-file-96px.png'),
+                sg.Button('', key=MenuScreen.CREATE_SPREADSHEET, tooltip='Gerar Planilha', size=(20, 10), image_filename='src/assets/excel-96px.png'),
+                sg.Button('', key=MenuScreen.EXIT, tooltip='Sair do Sistema', size=(20,10), image_filename='src/assets/exit2-96px.png'),
             ],
             [ sg.Image(source='src/assets/clock2.png', size=(100,100),key="image", expand_x=True, expand_y=True)],
             [ sg.Text(text='- Geração planilhas', font=("Helvetica", 20)) ],
@@ -62,56 +99,53 @@ class MenuScreen(Screen):
         return layout
 
 class ReadAFDScreen(Screen):
+
     def __init__(self, facade = None) -> None:
             self.layout = self.get_layout()
             self.title = 'ADF Read Screen'
             self.window = self.get_window()
             self.facade = facade
+            self.file_path = self.get_afd_path()
+
+    def set_size(self, size=(600, 250)):
+        return super().set_size(size=size)
 
     def show(self):
         while True:
             event, values = self.window.read()
-            if event == 'ok':
-                self.click_ok()
-            if event == 'exit':
+            if event == sg.WIN_CLOSED:
                 break
-            if  event == sg.WIN_CLOSED:
-                sys.exit(0)
 
         self.window.close()
 
-    def click_ok(self):
+    def get_afd_path(self):
             try:
                 afd_path = self.facade.get_afd_file_path()
             except:
-                afd_path = FileSelect(facade=self.facade)
+                file_select = FileSelect(facade=self.facade)
+                afd_path = file_select.show()
 
-            self.window['progressBar'].update(visible=True, current_count=0)
-            self.window.Element('progressText').update('Lendo arquivo... Aguarde...')
-            sg.popup_notify(title='Lendo arquivo, aguarde ...', display_duration_in_ms=1500, location=(500,100))
-            self.facade.read_afd(afd_path, self.window['progressBar'])
-            self.facade.save_afd_file_path(afd_path)
-            self.window.Element('progressText').update('Leitura concluída.')
-            sg.popup_notify(title='Leitura do arquivo concluída.', display_duration_in_ms=1500, location=(500,100))
+                if afd_path == '' or afd_path is None:
+                    file_select.window.close()
+
+            if afd_path == '' or afd_path is None:
+                self.window.close()
+            else:
+                self.window.Element('progressBar').update(visible=True, current_count=0)
+                self.show_notifycation('Lendo arquivo, por favor aguarde ...')
+                self.facade.read_afd(afd_path, self.window['progressBar'])
+                self.facade.save_afd_file_path(afd_path)
+                self.show_notifycation('Leitura do arquivo concluída.')
+                self.window.close()
 
     def get_layout(self):
-        layout = [
+        return [
             [sg.Text(text="Leitura de arquivo AFD",font=30)],
-            [
-                sg.Text(text="Selecione o arquivo AFD: "),
-                sg.FileBrowse(button_text='Selecione',key='afd_file', tooltip='Arquivo AFD', ),
-            ],
             [sg.ProgressBar(100, key='progressBar', visible=False, size=(30,30), bar_color=('green', 'gray'),)],
-            [sg.Text(text="", key='progressText')],
-            [
-                self.oKbutton(btn_tooltype='Pressione ok Para ler o arquivo'),
-                self.exitButton(btn_tooltype='Sair desta tela.'),
-            ],
         ]
 
-        return layout
-
 class FileSelect(Screen):
+    
     def __init__(self, facade = None) -> None:
         self.layout = self.get_layout()
         self.title = 'Seleção de Arquivo'
@@ -123,13 +157,17 @@ class FileSelect(Screen):
             event, values = self.window.read()
 
             if event == 'ok':
-                self.window.close()
-                return values['afd_file']
+                if values['afd_file'] == '' or values['afd_file'] is None:
+                    sg.popup_notify(title='Selecione o arquivo', location=(500, 200))
+                else:
+                    self.window.close()
+                    return values['afd_file']
             if event == 'exit' or event == sg.WIN_CLOSED:
+                self.window.close()
                 return None
             
     def get_layout(self):
-        layout = [
+        return [
             [sg.Text(text="Seleção de Arquivo",font=30)],
             [
                 sg.Text(text="Selecione o arquivo AFD: "),
@@ -140,20 +178,21 @@ class FileSelect(Screen):
                 self.exitButton(btn_tooltype='Sair desta tela.'),
             ],
         ]
-        return layout
         
 class CreateSpreadsheet(Screen):
+
     months = {'Janeiro':1, 'Fevereiro':2, 'Março':3, 'Abril':4, 'Maio':5, 'Junho':6, 'Julho':7,'Agosto':8,'Setembro':9,'Outubro':10,'Novembro':11, 'Dezembro':12}
 
     def __init__(self,facade = None) -> None:
         self.layout = self.get_layout()
-        self.title = 'Create Spreadsheet'
+        self.title = 'Gerar Planilha'
         self.window = self.get_window()
         self.facade = facade
 
     def show(self):
         while True:
             event, values = self.window.read()
+
             if event == 'ok':
                 try:
                     year = int(values['year'][0])
@@ -164,6 +203,7 @@ class CreateSpreadsheet(Screen):
                     sg.popup_notify(title='Planilha gerada', display_duration_in_ms=3000, location=(500,100))
                 except:
                     sg.popup_notify(title='Selecione o Mês e o Ano', location=(500, 200))
+
             if event == 'exit' or event == sg.WIN_CLOSED:
                 break
         self.window.close()
@@ -171,7 +211,8 @@ class CreateSpreadsheet(Screen):
     def get_layout(self):
         date =  datetime.now()
         months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
-        layout = [
+
+        return [
             [sg.Text("Selecione o período",font=('Times', 20))],
             [
                 sg.Listbox(key='month',values= months, default_values=[months[date.month-1]], size=(20, 12)),
@@ -183,7 +224,6 @@ class CreateSpreadsheet(Screen):
                 self.exitButton(btn_tooltype='Sair desta tela.'),
             ]
         ]
-        return layout
 
 if __name__ == '__main__':
     MenuScreen().show()
