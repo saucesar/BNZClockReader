@@ -8,8 +8,6 @@ from database.create_tables import *
 from models._models import Spreadsheet as Excel
 
 class Facade:
-    def __init__(self) -> None:
-        pass
 
     def read_afd(self, afd_file_path, progressBar):
         ReadAFDFile(afd_file_path=afd_file_path, progressBar=progressBar).read_and_save_in_database()
