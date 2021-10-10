@@ -3,37 +3,52 @@ import PySimpleGUI as sg
 from os.path import dirname, join, abspath
 sys.path.insert(0, abspath(join(dirname(__file__), '..')))
 sys.path.insert(0, abspath(join(dirname(__file__), 'database')))
-from main import Main
 from facade import Facade
 from datetime import datetime
 from database.create_tables import TableManager
 
-class MenuScreen:
+class Screen:
+    
+    def get_window(self):
+        return sg.Window(self.title, self.layout, size=(600, 500), margins=(100, 50), location=(400,100), element_justification='c', resizable=True, finalize=True)
+
+    def oKbutton(self, btn_key='ok', btn_tooltype = ''):
+        return sg.Button('', key=btn_key, tooltip=btn_tooltype, image_filename='src/assets/confirm-96px.png')
+    
+    def exitButton(self, btn_key='exit', btn_tooltype = ''):
+        return sg.Button('', key=btn_key, tooltip=btn_tooltype, image_filename='src/assets/exit3-96px.png')
+
+class MenuScreen(Screen):
+
     def __init__(self) -> None:
         sg.theme('Tan')
         self.layout = self.get_layout()
         self.title = 'Clock Reader'
         self.window = self.get_window()
-        self.main = Main()
         self.facade = Facade()
         TableManager().create_tables()
     
-    def get_window(self):
-        return sg.Window(self.title, self.layout, size=(600, 500), margins=(100, 50), location=(400,100), element_justification='c',resizable=True,finalize=True)
-
     def show(self):
         while True:
             event, values = self.window.read()
             if event == 'readAFDFile':
-                ReadAFDScreen(main=self.main, facade=self.facade).show()
+                ReadAFDScreen(facade=self.facade).show()
             if event == 'createSpreadsheet':
-                CreateSpreadsheet(main=self.main, facade=self.facade).show()
+                CreateSpreadsheet(facade=self.facade).show()
             if event == 'exit' or event == sg.WIN_CLOSED:
                 break
         self.window.close()
 
     def get_layout(self):
+        menu_options = [
+            ['Opções', ['Alterar arquivo AFD']],
+            ['Sair',]
+        ]
+
         layout = [
+            [
+                sg.Menu(menu_options)
+            ],
             [
                 sg.Button('', key='readAFDFile', tooltip='Ler Arquivo AFD', size=(20, 10), image_filename='src/assets/file3-96px.png'),
                 sg.Button('', key='createSpreadsheet', tooltip='Gerar Planilha', size=(20, 10), image_filename='src/assets/excel-96px.png'),
@@ -45,42 +60,39 @@ class MenuScreen:
             [ sg.Text(text='- Erros de ponto', font=("Helvetica", 20)) ],
         ]
         return layout
-    
-    def oKbutton(self, btn_key='ok', btn_tooltype = ''):
-        return sg.Button('', key=btn_key, tooltip=btn_tooltype, image_filename='src/assets/confirm-96px.png')
-    
-    def exitButton(self, btn_key='exit', btn_tooltype = ''):
-        return sg.Button('', key=btn_key, tooltip=btn_tooltype, image_filename='src/assets/exit3-96px.png')
 
-class ReadAFDScreen(MenuScreen):
-    def __init__(self, main = None, facade = None) -> None:
-        if not main is None and not facade is None:
+class ReadAFDScreen(Screen):
+    def __init__(self, facade = None) -> None:
             self.layout = self.get_layout()
             self.title = 'ADF Read Screen'
             self.window = self.get_window()
-            self.main = main
             self.facade = facade
-        else:
-            raise Exception('ReadAFDScreen - Infome o main e a facade')
 
     def show(self):
         while True:
             event, values = self.window.read()
             if event == 'ok':
-                if values['afd_file'] != '':
-                    self.window['progressBar'].update(visible=True, current_count=0)
-                    self.window.Element('progressText').update('Lendo arquivo... Aguarde...')
-                    sg.popup_notify(title='Lendo arquivo, aguarde ...', display_duration_in_ms=1500, location=(500,100))
-                    self.facade.read_afd(values['afd_file'], self.window['progressBar'])
-                    sg.popup_notify(title='Leitura do arquivo concluída.', display_duration_in_ms=1500, location=(500,100))
-                else:
-                    sg.popup_error('Selecione o arquivo AFD')
+                self.click_ok()
             if event == 'exit':
                 break
             if  event == sg.WIN_CLOSED:
                 sys.exit(0)
 
         self.window.close()
+
+    def click_ok(self):
+            try:
+                afd_path = self.facade.get_afd_file_path()
+            except:
+                afd_path = FileSelect(facade=self.facade)
+
+            self.window['progressBar'].update(visible=True, current_count=0)
+            self.window.Element('progressText').update('Lendo arquivo... Aguarde...')
+            sg.popup_notify(title='Lendo arquivo, aguarde ...', display_duration_in_ms=1500, location=(500,100))
+            self.facade.read_afd(afd_path, self.window['progressBar'])
+            self.facade.save_afd_file_path(afd_path)
+            self.window.Element('progressText').update('Leitura concluída.')
+            sg.popup_notify(title='Leitura do arquivo concluída.', display_duration_in_ms=1500, location=(500,100))
 
     def get_layout(self):
         layout = [
@@ -96,21 +108,48 @@ class ReadAFDScreen(MenuScreen):
                 self.exitButton(btn_tooltype='Sair desta tela.'),
             ],
         ]
+
         return layout
 
-class CreateSpreadsheet(MenuScreen):
+class FileSelect(Screen):
+    def __init__(self, facade = None) -> None:
+        self.layout = self.get_layout()
+        self.title = 'Seleção de Arquivo'
+        self.window = self.get_window()
+        self.facade = facade
+
+    def show(self):
+        while True:
+            event, values = self.window.read()
+
+            if event == 'ok':
+                self.window.close()
+                return values['afd_file']
+            if event == 'exit' or event == sg.WIN_CLOSED:
+                return None
+            
+    def get_layout(self):
+        layout = [
+            [sg.Text(text="Seleção de Arquivo",font=30)],
+            [
+                sg.Text(text="Selecione o arquivo AFD: "),
+                sg.FileBrowse(button_text='Selecione', key='afd_file', tooltip='Arquivo AFD', ),
+            ],
+            [
+                self.oKbutton(btn_tooltype='Pressione ok Para ler o arquivo'),
+                self.exitButton(btn_tooltype='Sair desta tela.'),
+            ],
+        ]
+        return layout
+        
+class CreateSpreadsheet(Screen):
     months = {'Janeiro':1, 'Fevereiro':2, 'Março':3, 'Abril':4, 'Maio':5, 'Junho':6, 'Julho':7,'Agosto':8,'Setembro':9,'Outubro':10,'Novembro':11, 'Dezembro':12}
 
-    def __init__(self, main = None, facade = None) -> None:
-        if not main is None and not facade is None:
-            sg.theme('Tan')
-            self.layout = self.get_layout()
-            self.title = 'Create Spreadsheet'
-            self.window = self.get_window()
-            self.main = main
-            self.facade = facade
-        else:
-            raise Exception('CreateSpreadsheet - Infome o main e a facade')
+    def __init__(self,facade = None) -> None:
+        self.layout = self.get_layout()
+        self.title = 'Create Spreadsheet'
+        self.window = self.get_window()
+        self.facade = facade
 
     def show(self):
         while True:
