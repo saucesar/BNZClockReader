@@ -89,8 +89,8 @@ class Spreadsheet:
         markings = workbook.active
         markings.title = 'Marcações'
         errors = workbook.create_sheet('Erros')
-        header = ['NOME', 'DIA','DATA', 'E1', 'S1', 'E2', 'S2', '1ª JORNADA', 'ALMOÇO', 'INT.ENTRE.JORNADAS', 'HORA. EXTRA', 'OBS']
-        #           A       B     C      D     E     F     G          H          I               J                K            L
+        header = ['NOME', 'DIA','DATA', 'E1', 'S1', 'E2', 'S2', '1ª TURNO', 'ALMOÇO', 'INT.ENTRE.JORNADAS', 'HORA. EXTRA', 'OBS']
+        #           A       B     C      D     E     F     G          H        I               J                   K          L
 
         markings.append(header)
         errors.append(header)
@@ -105,56 +105,81 @@ class Spreadsheet:
             previous = None
 
             for t in e.time_clock_marking_by_month(year, month):
-                extra = self.calc_extra_hour(t)
+                first_journey = self.calc_time_diff(t.first_entry, t.first_exit)
+                lunch = self.calc_time_diff(t.first_exit, t.second_entry)
                 break_working = self.calc_break_working_hours(previous, t)
-                journey = self.calc_time_diff(t.first_exit, t.second_entry)
-                lunch = self.calc_time_diff(t.first_entry, t.first_exit)
+                extra = self.calc_extra_hour(t)
 
-                row = [e.name, Spreadsheet.weekdays[t.date.weekday()], t.date, t.first_entry, t.first_exit, t.second_entry, t.second_exit, lunch, journey, break_working, extra ]
+                row = [e.name, Spreadsheet.weekdays[t.date.weekday()], t.date, t.first_entry, t.first_exit, t.second_entry, t.second_exit, first_journey, lunch, break_working, extra ]
 
                 have_error = False
                 obs = ''
-                dxf = DifferentialStyle(font=Font(bold=True), fill=PatternFill(start_color='EE1111', end_color='EE1111'))
-                rule = Rule(type='cellIs', dxf=dxf, formula=["10"])
-
-                if not lunch == '' and lunch < timedelta(hours=1, minutes=50):
-                    #markings[f'I{line}'].fill = PatternFill('solid', fgColor='FF2000')
-                    #errors[f'I{line_error}'].fill = PatternFill('solid', fgColor='FF2000')
-                    font = Font(color="000000", italic=True)
-                    red_fill = PatternFill(bgColor="FFC7CE")
-                    markings.conditional_formatting.add('I2:I5000',  FormulaRule(formula=[f'I{line}>"01:50:00"'], font=font, fill=red_fill))
-                    obs += 'Mais que 1h 50m de almoço, '
-                    have_error = True
                 
-                if not break_working == '' and break_working < timedelta(hours=12):
-                    #markings[f'J{line}'].fill = PatternFill('solid', fgColor='FF2000')
-                    #errors[f'J{line_error}'].fill = PatternFill('solid', fgColor='FF2000')
-                    obs += 'Menos que 12 HR entre Jornadas, '
-                    have_error = True
-
-                if not extra == '' and extra > timedelta(hours=1,minutes=30):
-                    #markings[f'K{line}'].fill = PatternFill('solid', fgColor='FF2000')
-                    #errors[f'K{line_error}'].fill = PatternFill('solid', fgColor='FF2000')
-                    have_error = True
-                    obs += 'Mais que 01h 30m extra, '
+                error_journey, obs_journey = self.check_first_journey(first_journey, markings, errors, line, line_error)
+                error_lunch, obs_lunch = self.check_lunch(lunch, markings, errors, line, line_error)
+                error_break_working, obs_break_working = self.check_break_working(break_working, markings, errors, line, line_error)
+                error_extra, obs_extra = self.check_extra(extra, markings, errors, line, line_error)
                 
+                obs += obs_journey
+                obs += obs_lunch
+                obs += obs_break_working
+                obs += obs_extra
+
                 row.append(obs)
                 markings.append(row)
                 
-                if have_error:
+                if error_journey or error_lunch or error_break_working or error_extra:
                     errors.append(row)
                     line_error += 1
                 
                 previous = t
                 line += 1
-
-        markings.add_table(self.create_table('MarcaçõesTable', 'Marcações'))
-        errors.add_table(self.create_table('ErrosTable', 'Erros'))
+                    
+        markings.add_table(self.create_table('TableStyleMedium9', 'Marcações'))
+        errors.add_table(self.create_table('TableStyleMedium8', 'Erros'))
 
         if os.name == 'posix': destiny_folder += '/'
         elif os.name == 'nt': destiny_folder += '\\'
         
         workbook.save("{}{}_{}.xlsx".format(destiny_folder, Spreadsheet.months[month], str(year)))
+
+    def check_first_journey(self, first_journey, markings, errors, line, line_error):
+        if first_journey != '' and first_journey > timedelta(hours=4, minutes=30):
+            markings[f'H{line}'].fill = PatternFill('solid', fgColor='FF2000')
+            errors[f'H{line_error}'].fill = PatternFill('solid', fgColor='FF2000')
+            return (True, 'Mais que 4h 30m no primeiro turno, ')
+        else:
+            return (False, '')
+
+    def check_lunch(self, lunch, markings, errors, line, line_error):
+        if lunch != '' and lunch > timedelta(hours=1, minutes=50):
+            markings[f'I{line}'].fill = PatternFill('solid', fgColor='FF2000')
+            errors[f'I{line_error}'].fill = PatternFill('solid', fgColor='FF2000')
+            #red_fill = PatternFill(bgColor="FF0000", fgColor='FF0000')
+            #rule = Rule(type="cellIs", operator='greaterThan', dxf= DifferentialStyle(fill=red_fill), formula=["01:50:00"], stopIfTrue=False)
+            #markings.conditional_formatting.add(f'I{line}:I{line}', rule)
+            #errors.conditional_formatting.add(f'I{line_error}:I{line_error}', rule)
+            
+            return (True, 'Mais que 1h 50m de almoço, ')
+        else:
+            return (False, '')
+
+    def check_break_working(self, break_working, markings, errors, line, line_error):
+        if break_working != '' and break_working < timedelta(hours=12):
+            markings[f'J{line}'].fill = PatternFill('solid', fgColor='FF2000')
+            errors[f'J{line_error}'].fill = PatternFill('solid', fgColor='FF2000')
+            return (True, 'Menos que 12h entre Jornadas, ')
+        else:
+            return (False, '')
+
+    def check_extra(self, extra, markings, errors, line, line_error):
+        if extra != '' and extra > timedelta(minutes=30, hours=1):
+            markings[f'K{line}'].fill = PatternFill('solid', fgColor='FF2000')
+            errors[f'K{line_error}'].fill = PatternFill('solid', fgColor='FF2000')
+            
+            return (True, 'Mais que 01h 30m extra, ')
+        else:
+            return (False, '')
 
     def create_table(self, name, displayName):
         table = Table(displayName=displayName, ref="A1:K5000")
