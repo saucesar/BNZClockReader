@@ -79,7 +79,7 @@ class Spreadsheet:
     def create_workbook(self):
         workbook = Workbook()
         workbook.epoch = openpyxl.utils.datetime.CALENDAR_MAC_1904
-        workbook.iso_dates = True
+        #workbook.iso_dates = True
 
         return workbook
         
@@ -88,7 +88,9 @@ class Spreadsheet:
         workbook = self.create_workbook()
         markings = workbook.active
         markings.title = 'Marcações'
+        markings.freeze_panes = 'M2'
         errors = workbook.create_sheet('Erros')
+        errors.freeze_panes = 'M2'
         header = ['NOME', 'DIA','DATA', 'E1', 'S1', 'E2', 'S2', '1ª TURNO', 'ALMOÇO', 'INT.ENTRE.JORNADAS', 'HORA. EXTRA', 'OBS']
         #           A       B     C      D     E     F     G          H        I               J                   K          L
 
@@ -109,11 +111,9 @@ class Spreadsheet:
                 lunch = self.calc_time_diff(t.first_exit, t.second_entry)
                 break_working = self.calc_break_working_hours(previous, t)
                 extra = self.calc_extra_hour(t)
+                obs = ''
 
                 row = [e.name, Spreadsheet.weekdays[t.date.weekday()], t.date, t.first_entry, t.first_exit, t.second_entry, t.second_exit, first_journey, lunch, break_working, extra ]
-
-                have_error = False
-                obs = ''
                 
                 error_journey, obs_journey = self.check_first_journey(first_journey, markings, errors, line, line_error)
                 error_lunch, obs_lunch = self.check_lunch(lunch, markings, errors, line, line_error)
@@ -145,44 +145,46 @@ class Spreadsheet:
 
     def check_first_journey(self, first_journey, markings, errors, line, line_error):
         if first_journey != '' and first_journey > timedelta(hours=4, minutes=30):
-            markings[f'H{line}'].fill = PatternFill('solid', fgColor='FF2000')
-            errors[f'H{line_error}'].fill = PatternFill('solid', fgColor='FF2000')
+            #markings[f'H{line}'].fill = PatternFill('solid', fgColor='FF0000')
+            #errors[f'H{line_error}'].fill = PatternFill('solid', fgColor='FF2000')
+
             return (True, 'Mais que 4h 30m no primeiro turno, ')
         else:
             return (False, '')
 
     def check_lunch(self, lunch, markings, errors, line, line_error):
         if lunch != '' and lunch > timedelta(hours=1, minutes=50):
-            markings[f'I{line}'].fill = PatternFill('solid', fgColor='FF2000')
-            errors[f'I{line_error}'].fill = PatternFill('solid', fgColor='FF2000')
+            #markings[f'I{line}'].fill = PatternFill('solid', fgColor='FF2000')
+            #errors[f'I{line_error}'].fill = PatternFill('solid', fgColor='FF2000')
             #red_fill = PatternFill(bgColor="FF0000", fgColor='FF0000')
             #rule = Rule(type="cellIs", operator='greaterThan', dxf= DifferentialStyle(fill=red_fill), formula=["01:50:00"], stopIfTrue=False)
             #markings.conditional_formatting.add(f'I{line}:I{line}', rule)
             #errors.conditional_formatting.add(f'I{line_error}:I{line_error}', rule)
-            
+  
             return (True, 'Mais que 1h 50m de almoço, ')
         else:
             return (False, '')
 
     def check_break_working(self, break_working, markings, errors, line, line_error):
         if break_working != '' and break_working < timedelta(hours=12):
-            markings[f'J{line}'].fill = PatternFill('solid', fgColor='FF2000')
-            errors[f'J{line_error}'].fill = PatternFill('solid', fgColor='FF2000')
+            #markings[f'J{line}'].fill = PatternFill('solid', fgColor='FF2000')
+            #errors[f'J{line_error}'].fill = PatternFill('solid', fgColor='FF2000')
+
             return (True, 'Menos que 12h entre Jornadas, ')
         else:
             return (False, '')
 
     def check_extra(self, extra, markings, errors, line, line_error):
         if extra != '' and extra > timedelta(minutes=30, hours=1):
-            markings[f'K{line}'].fill = PatternFill('solid', fgColor='FF2000')
-            errors[f'K{line_error}'].fill = PatternFill('solid', fgColor='FF2000')
-            
+            #markings[f'K{line}'].fill = PatternFill('solid', fgColor='FF2000')
+            #errors[f'K{line_error}'].fill = PatternFill('solid', fgColor='FF2000')
+
             return (True, 'Mais que 01h 30m extra, ')
         else:
             return (False, '')
 
     def create_table(self, name, displayName):
-        table = Table(displayName=displayName, ref="A1:K5000")
+        table = Table(displayName=displayName, ref="A1:L5000")
         table.tableStyleInfo = TableStyleInfo(name=name, showFirstColumn=True, showLastColumn=True, showRowStripes=True, showColumnStripes=True)
 
         return table
