@@ -1,3 +1,4 @@
+from openpyxl.workbook import workbook
 from _peewee_orm import *
 from _imports import *
 from _openpyxl import *
@@ -75,43 +76,91 @@ class Spreadsheet:
     def __init__(self) -> None:
         pass
 
-    def save_month_db_spreadsheet(self, year, month, destiny_folder):
+    def create_workbook(self):
         workbook = Workbook()
+        workbook.epoch = openpyxl.utils.datetime.CALENDAR_MAC_1904
         workbook.iso_dates = True
+
+        return workbook
+        
+
+    def save_month_db_spreadsheet(self, year, month, destiny_folder):
+        workbook = self.create_workbook()
         markings = workbook.active
-        markings.title = 'markings'
+        markings.title = 'Marcações'
+        errors = workbook.create_sheet('Erros')
+        header = ['NOME', 'DIA','DATA', 'E1', 'S1', 'E2', 'S2', '1ª JORNADA', 'ALMOÇO', 'INT.ENTRE.JORNADAS', 'HORA. EXTRA', 'OBS']
+        #           A       B     C      D     E     F     G          H          I               J                K            L
 
-        tab = Table(displayName="Marcações", ref="A1:K50000")
-        tab.tableStyleInfo = TableStyleInfo(name="TableStyleMedium9", showFirstColumn=True, showLastColumn=True, showRowStripes=True, showColumnStripes=True)
+        markings.append(header)
+        errors.append(header)
 
-        markings.append(['NOME', 'DIA','DATA', 'E1', 'S1', 'E2', 'S2', '1ª JORNADA', 'ALMOÇO', 'INT.ENTRE.JORNADAS', 'HORA. EXTRA'])
         employees = Employee.select()
-        count = 0
         total = employees.__len__()
+        line = 2
+        line_error = 2
 
-        for progress in track(range(total), 'Processando marcações'):
-            e = employees[progress]
+        for index in track(range(0, total), 'Processando '):
+            e = employees[index]
             previous = None
+
             for t in e.time_clock_marking_by_month(year, month):
-                row = [e.name, Spreadsheet.weekdays[t.date.weekday()], t.date, t.first_entry, t.first_exit, t.second_entry, t.second_exit,\
-                       self.calc_time_diff(t.first_entry, t.first_exit),\
-                       self.calc_time_diff(t.first_exit, t.second_entry),\
-                       self.calc_break_working_hours(previous, t),\
-                       self.calc_extra_hour(t)
-                    ]
+                extra = self.calc_extra_hour(t)
+                break_working = self.calc_break_working_hours(previous, t)
+                journey = self.calc_time_diff(t.first_exit, t.second_entry)
+                lunch = self.calc_time_diff(t.first_entry, t.first_exit)
+
+                row = [e.name, Spreadsheet.weekdays[t.date.weekday()], t.date, t.first_entry, t.first_exit, t.second_entry, t.second_exit, lunch, journey, break_working, extra ]
+
+                have_error = False
+                obs = ''
+                dxf = DifferentialStyle(font=Font(bold=True), fill=PatternFill(start_color='EE1111', end_color='EE1111'))
+                rule = Rule(type='cellIs', dxf=dxf, formula=["10"])
+
+                if not lunch == '' and lunch < timedelta(hours=1, minutes=50):
+                    #markings[f'I{line}'].fill = PatternFill('solid', fgColor='FF2000')
+                    #errors[f'I{line_error}'].fill = PatternFill('solid', fgColor='FF2000')
+                    font = Font(color="000000", italic=True)
+                    red_fill = PatternFill(bgColor="FFC7CE")
+                    markings.conditional_formatting.add('I2:I5000',  FormulaRule(formula=[f'I{line}>"01:50:00"'], font=font, fill=red_fill))
+                    obs += 'Mais que 1h 50m de almoço, '
+                    have_error = True
+                
+                if not break_working == '' and break_working < timedelta(hours=12):
+                    #markings[f'J{line}'].fill = PatternFill('solid', fgColor='FF2000')
+                    #errors[f'J{line_error}'].fill = PatternFill('solid', fgColor='FF2000')
+                    obs += 'Menos que 12 HR entre Jornadas, '
+                    have_error = True
+
+                if not extra == '' and extra > timedelta(hours=1,minutes=30):
+                    #markings[f'K{line}'].fill = PatternFill('solid', fgColor='FF2000')
+                    #errors[f'K{line_error}'].fill = PatternFill('solid', fgColor='FF2000')
+                    have_error = True
+                    obs += 'Mais que 01h 30m extra, '
+                
+                row.append(obs)
                 markings.append(row)
+                
+                if have_error:
+                    errors.append(row)
+                    line_error += 1
+                
                 previous = t
+                line += 1
 
-            count += 1
+        markings.add_table(self.create_table('MarcaçõesTable', 'Marcações'))
+        errors.add_table(self.create_table('ErrosTable', 'Erros'))
 
-        markings.add_table(tab)
-
-        if os.name == 'posix':
-            destiny_folder += '/'
-        elif os.name == 'nt':
-            destiny_folder += '\\'
+        if os.name == 'posix': destiny_folder += '/'
+        elif os.name == 'nt': destiny_folder += '\\'
         
         workbook.save("{}{}_{}.xlsx".format(destiny_folder, Spreadsheet.months[month], str(year)))
+
+    def create_table(self, name, displayName):
+        table = Table(displayName=displayName, ref="A1:K5000")
+        table.tableStyleInfo = TableStyleInfo(name=name, showFirstColumn=True, showLastColumn=True, showRowStripes=True, showColumnStripes=True)
+
+        return table
 
     def calc_time_diff(self, start_time, end_time):
         if start_time is None or end_time is None: return ''
@@ -124,7 +173,7 @@ class Spreadsheet:
 
     def calc_break_working_hours(self, previous, today):
         if previous is None or previous.second_exit is None or today is None or today.first_entry is None:
-            return 'N/A'
+            return ''
         else:
             start = datetime.combine(previous.date, previous.second_exit)
             end = datetime.combine(today.date, today.first_entry)
