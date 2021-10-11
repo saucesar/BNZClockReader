@@ -260,7 +260,7 @@ class CreateSpreadsheet(Screen):
         months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 
         return [
-            [sg.Text("Selecione o período",font=('Times', 20))],
+            [sg.Text("Selecione mês e ano",font=('Times', 20))],
             [
                 sg.Listbox(key='month',values= months, default_values=[months[date.month-1]], size=(20, 12)),
                 sg.Listbox(key='year',values=range(2018, date.year+1), default_values=[date.year,], size=(20, 12))
