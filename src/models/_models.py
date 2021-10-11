@@ -136,7 +136,7 @@ class Spreadsheet:
                 line += 1
                     
         markings.add_table(self.create_table('TableStyleMedium9', 'Marcações'))
-        errors.add_table(self.create_table('TableStyleMedium8', 'Erros'))
+        errors.add_table(self.create_table('TableStyleMedium9', 'Erros'))
 
         if os.name == 'posix': destiny_folder += '/'
         elif os.name == 'nt': destiny_folder += '\\'
