@@ -23,7 +23,7 @@ class BuildExecutable:
         if os.name == BuildExecutable.LINUX:
             os.system('pip3 install pyinstaller')
             os.system('pyinstaller src/menu.py src/database/create_tables.py src/models/*.py -n ClockReader --clean --onefile')
-            os.system('mkdir dist/src/')
+            os.system('mkdir -p dist/src/')
             os.system('cp -r src/assets dist/src/assets')
         elif os.name == BuildExecutable.WINDOWS:
             os.system('pip install pyinstaller')
