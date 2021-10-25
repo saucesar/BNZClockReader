@@ -141,7 +141,10 @@ class Spreadsheet:
         if os.name == 'posix': destiny_folder += '/'
         elif os.name == 'nt': destiny_folder += '\\'
         
-        workbook.save("{}{}_{}.xlsx".format(destiny_folder, Spreadsheet.months[month], str(year)))
+        file_name = "{}{}_{}.xlsx".format(destiny_folder, Spreadsheet.months[month], str(year))
+        workbook.save(file_name)
+
+        if os.name == 'nt': os.startfile(file_name)
 
     def check_first_journey(self, first_journey, markings, errors, line, line_error):
         if first_journey != '' and first_journey > timedelta(hours=4, minutes=30):
