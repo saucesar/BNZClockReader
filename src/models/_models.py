@@ -1,4 +1,4 @@
-from openpyxl.workbook import workbook
+from openpyxl import workbook
 from _peewee_orm import *
 from _imports import *
 from _openpyxl import *
@@ -22,10 +22,15 @@ class Employee(Model):
     class Meta:
         table_name = "employees"
 
-    def time_clock_marking_by_month(self, year, month):
+    def time_clock_marking_by_month(self, year, month, day = 1):
         return TimeClockMarking.select().where(TimeClockMarking.employee == self,
-                                               TimeClockMarking.date >= datetime(year, month, 1).__str__(),
+                                               TimeClockMarking.date >= datetime(year, month, day).__str__(),
                                                TimeClockMarking.date <= datetime(year, month, monthrange(year, month)[1]).__str__())
+
+    def time_clock_marking_by_period(self, start_date, final_date):
+        return TimeClockMarking.select().where(TimeClockMarking.employee == self,
+                                               TimeClockMarking.date >= datetime(start_date['year'], start_date['month'], start_date['day']).__str__(),
+                                               TimeClockMarking.date <= datetime(final_date['year'], final_date['month'], final_date['day']).__str__())
 
     def __str__(self) -> str:
         return "ID: "+str(self.id)+" NAME: "+self.name+" PIS: "+self.pis+" CREATED_AT: "+self.created_at.__str__()+" UPDATED_AT: "+self.updated_at.__str__()
@@ -70,7 +75,7 @@ class KeyValue(Model):
 
 class Spreadsheet:
     
-    months = {1:'JAN',2:'FEV',3:'MAR',4:'ABR',5:'MAI',6:'JUN',7:'JUL',8:'AGO',9:'SET',10:'OUT',11:'NOV',12:'DEZ',}
+    #months = {1:'JAN',2:'FEV',3:'MAR',4:'ABR',5:'MAI',6:'JUN',7:'JUL',8:'AGO',9:'SET',10:'OUT',11:'NOV',12:'DEZ',}
     weekdays = {0:'SEG',1:'TER',2:'QUA',3:'QUI',4:'SEX',5:'SAB',6:'DOM'}
 
     def __init__(self) -> None:
@@ -81,10 +86,12 @@ class Spreadsheet:
         workbook.epoch = openpyxl.utils.datetime.CALENDAR_MAC_1904
         #workbook.iso_dates = True
 
-        return workbook
-        
+        return workbook        
 
-    def save_month_db_spreadsheet(self, year, month, destiny_folder):
+    def get_last_day_of_month(year, month):
+        return monthrange(year, month)[1]
+
+    def save_period_db_spreadsheet(self, start_date, final_date, destiny_folder):
         workbook = self.create_workbook()
         markings = workbook.active
         markings.title = 'Marcações'
@@ -102,11 +109,11 @@ class Spreadsheet:
         line = 2
         line_error = 2
 
-        for index in track(range(0, total), 'Processando '):
+        for index in track(range(0, total), 'Processando...'):
             e = employees[index]
             previous = None
 
-            for t in e.time_clock_marking_by_month(year, month):
+            for t in e.time_clock_marking_by_period(start_date, final_date):
                 first_journey = self.calc_time_diff(t.first_entry, t.first_exit)
                 lunch = self.calc_time_diff(t.first_exit, t.second_entry)
                 break_working = self.calc_break_working_hours(previous, t)
@@ -141,10 +148,11 @@ class Spreadsheet:
         if os.name == 'posix': destiny_folder += '/'
         elif os.name == 'nt': destiny_folder += '\\'
         
-        file_name = "{}{}_{}.xlsx".format(destiny_folder, Spreadsheet.months[month], str(year))
+        file_name = "{}MARCAÇÕES_DE_{}-{}-{}_A_{}-{}-{}.xlsx".format(destiny_folder, start_date['day'], start_date['month'], start_date['year'], final_date['day'], final_date['month'], final_date['year'])
         workbook.save(file_name)
 
-        if os.name == 'nt': os.startfile(file_name)
+        if os.name == 'nt':
+            os.startfile(file_name)
 
     def check_first_journey(self, first_journey, markings, errors, line, line_error):
         if first_journey != '' and first_journey > timedelta(hours=4, minutes=30):
