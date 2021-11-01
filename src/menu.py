@@ -1,3 +1,4 @@
+from re import split
 import sys,os
 import PySimpleGUI as sg
 from os.path import dirname, join, abspath
@@ -39,7 +40,13 @@ class MenuScreen(Screen):
     EXIT = 'Sair'
 
     def __init__(self) -> None:
-        sg.theme('Tan')
+        #sg.theme('Tan')
+        #sg.theme("Dark Blue 3")
+        #sg.theme("DarkBlack")
+        #sg.theme("DefaultNoMoreNagging")
+        #sg.theme("LightBrown1")
+        #sg.theme("LightGray")
+        sg.theme("Reddit")
         self.layout = self.get_layout()
         self.title = 'Clock Reader'
         self.window = self.get_window()
@@ -231,7 +238,7 @@ class CreateSpreadsheet(Screen):
     def show(self):
         while True:
             event, values = self.window.read()
-                
+
             if event == 'ok':
                 destiny_folder = self.facade.get_spreadsheet_folder()
                 
@@ -240,15 +247,19 @@ class CreateSpreadsheet(Screen):
                     destiny_folder = self.facade.get_spreadsheet_folder()
 
                 try:
-                    year = int(values['year'][0])
-                    month = CreateSpreadsheet.months[values['month'][0]]
+                    start_split = split('/', values['start_date'])
+                    final_split = split('/', values['final_date'])
+                    
+                    start_date = {'day':int(start_split[0]),'month':int(start_split[1]),'year':int(start_split[2])}
+                    final_date = {'day':int(final_split[0]),'month':int(final_split[1]),'year':int(final_split[2])}
                         
                     self.window['progressBar'].update(visible=True, current_count=0)
 
-                    self.facade.create_spreadsheet(month, year, destiny_folder, self.window['progressBar'])
+                    self.facade.create_spreadsheet(start_date, final_date, destiny_folder, self.window['progressBar'])
                     sg.popup_notify(title='Planilha gerada\nSalva em {}'.format(destiny_folder), display_duration_in_ms=3000, location=(500,100))
                 except:
                     pass
+                    #self.show_error('Selecione o periodo corretamente.')
 
             elif event == 'exit' or event == sg.WIN_CLOSED:
                 break
@@ -262,8 +273,10 @@ class CreateSpreadsheet(Screen):
         return [
             [sg.Text("Selecione mês e ano",font=('Times', 20))],
             [
-                sg.Listbox(key='month',values= months, default_values=[months[date.month-1]], size=(20, 12)),
-                sg.Listbox(key='year',values=range(2018, date.year+1), default_values=[date.year,], size=(20, 12))
+                #sg.Listbox(key='month',values=months, default_values=[months[date.month-1]], size=(20, 12)),
+                #sg.Listbox(key='year',values=range(2018, date.year+1), default_values=[date.year,], size=(20, 12)),
+                [sg.InputText(key='start_date', size=(20,1)), sg.CalendarButton('Data Inicial', size=(10,1), title='Inicial', target='start_date', format='%d/%m/%Y')],
+                [sg.InputText(key='final_date', size=(20,1)), sg.CalendarButton('Data Final', size=(10,1), title='Final', target='final_date', format='%d/%m/%Y')],
             ],
             [sg.ProgressBar(100, key='progressBar', visible=False, bar_color=('green', 'gray'), size=(30,30))],
             [
