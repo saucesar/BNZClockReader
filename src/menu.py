@@ -1,12 +1,13 @@
 from re import split
-import sys,os
+import sys
 import PySimpleGUI as sg
 from os.path import dirname, join, abspath
 sys.path.insert(0, abspath(join(dirname(__file__), '..')))
 sys.path.insert(0, abspath(join(dirname(__file__), 'database')))
 from facade import Facade
-from datetime import datetime
+from datetime import date, timedelta
 from database.create_tables import TableManager
+from calendar import monthrange
 
 class Screen:
     def show(self):
@@ -229,6 +230,11 @@ class CreateSpreadsheet(Screen):
 
     months = {'Janeiro':1, 'Fevereiro':2, 'Março':3, 'Abril':4, 'Maio':5, 'Junho':6, 'Julho':7,'Agosto':8,'Setembro':9,'Outubro':10,'Novembro':11, 'Dezembro':12}
 
+    TODAY = 'Hoje'
+    YESTERDAY = 'Ontem'
+    LAST_WEEK = 'Ultima Semana'
+    MONTH = 'Mes'
+
     def __init__(self,facade = None) -> None:
         self.layout = self.get_layout()
         self.title = 'Gerar Planilha'
@@ -238,45 +244,82 @@ class CreateSpreadsheet(Screen):
     def show(self):
         while True:
             event, values = self.window.read()
-
-            if event == 'ok':
-                destiny_folder = self.facade.get_spreadsheet_folder()
-                
-                if destiny_folder == '' or destiny_folder is None:
-                    FolderSelect(self.facade).show()
-                    destiny_folder = self.facade.get_spreadsheet_folder()
-
-                try:
-                    start_split = split('/', values['start_date'])
-                    final_split = split('/', values['final_date'])
+            destiny_folder = self.facade.get_spreadsheet_folder()
+            try:
+                if event == 'ok':
                     
-                    start_date = {'day':int(start_split[0]),'month':int(start_split[1]),'year':int(start_split[2])}
-                    final_date = {'day':int(final_split[0]),'month':int(final_split[1]),'year':int(final_split[2])}
-                        
+                    if destiny_folder == '' or destiny_folder is None:
+                        FolderSelect(self.facade).show()
+                        destiny_folder = self.facade.get_spreadsheet_folder()
+
+                        start_date = self.date_to_dict(values['start_date'])
+                        final_date = self.date_to_dict(values['final_date'])
+                            
+                        self.window['progressBar'].update(visible=True, current_count=0)
+
+                        self.facade.create_spreadsheet(start_date, final_date, destiny_folder, self.window['progressBar'])
+                        sg.popup_notify(title='Planilha gerada\nSalva em {}'.format(destiny_folder), display_duration_in_ms=3000, location=(500,100))
+
+                elif event == CreateSpreadsheet.MONTH:
+                    start_date =  self.date_to_dict(date.today().replace(day=1).__str__(), '-', year_index=0, day_index=2)
+                    final_date =  self.date_to_dict(date.today().replace(day=monthrange(start_date['year'], start_date['month'])[1]).__str__(), '-', year_index=0, day_index=2)
+
                     self.window['progressBar'].update(visible=True, current_count=0)
 
                     self.facade.create_spreadsheet(start_date, final_date, destiny_folder, self.window['progressBar'])
                     sg.popup_notify(title='Planilha gerada\nSalva em {}'.format(destiny_folder), display_duration_in_ms=3000, location=(500,100))
-                except:
-                    pass
-                    #self.show_error('Selecione o periodo corretamente.')
+        
+                elif event == CreateSpreadsheet.TODAY:
+                    today =  self.date_to_dict(date.today().__str__(), '-', year_index=0, day_index=2)
 
-            elif event == 'exit' or event == sg.WIN_CLOSED:
-                break
+                    self.window['progressBar'].update(visible=True, current_count=0)
+
+                    self.facade.create_spreadsheet(today, today, destiny_folder, self.window['progressBar'])
+                    sg.popup_notify(title='Planilha gerada\nSalva em {}'.format(destiny_folder), display_duration_in_ms=3000, location=(500,100))
+
+                elif event == CreateSpreadsheet.YESTERDAY:
+                    yeasterday =  self.date_to_dict((date.today() - timedelta(days=1)).__str__(), '-', year_index=0, day_index=2)
+
+                    self.window['progressBar'].update(visible=True, current_count=0)
+
+                    self.facade.create_spreadsheet(yeasterday, yeasterday, destiny_folder, self.window['progressBar'])
+                    sg.popup_notify(title='Planilha gerada\nSalva em {}'.format(destiny_folder), display_duration_in_ms=3000, location=(500,100))
+
+                elif event == CreateSpreadsheet.LAST_WEEK:
+                    start = date.today() - timedelta(days=date.today().weekday()) - timedelta(days=7)
+                    final = date.today() - timedelta(days=date.today().weekday()) - timedelta(days=1)
+                    start_date = self.date_to_dict(start.__str__(), '-', year_index=0, day_index=2)
+                    final_date = self.date_to_dict(final.__str__(), '-', year_index=0, day_index=2)
+
+                    self.window['progressBar'].update(visible=True, current_count=0)
+
+                    self.facade.create_spreadsheet(start_date, final_date, destiny_folder, self.window['progressBar'])
+                    sg.popup_notify(title='Planilha gerada\nSalva em {}'.format(destiny_folder), display_duration_in_ms=3000, location=(500,100))
+
+                elif event == 'exit' or event == sg.WIN_CLOSED:
+                    break
+
+            except Exception as e:
+                self.show_error(e.__str__())
 
         self.window.close()
-        
-    def get_layout(self):
-        date =  datetime.now()
-        months = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 
+    def date_to_dict(self, date, split_char='/', day_index=0, month_index=1, year_index=2):
+        date_split = split(split_char, date)
+        return {'day':int(date_split[day_index]), 'month':int(date_split[month_index]), 'year':int(date_split[year_index])}
+
+    def get_layout(self):
         return [
-            [sg.Text("Selecione mês e ano",font=('Times', 20))],
+            [sg.Text("Selecione o período ou um dos botões rápidos",font=('Times', 20))],
             [
-                #sg.Listbox(key='month',values=months, default_values=[months[date.month-1]], size=(20, 12)),
-                #sg.Listbox(key='year',values=range(2018, date.year+1), default_values=[date.year,], size=(20, 12)),
                 [sg.InputText(key='start_date', size=(20,1)), sg.CalendarButton('Data Inicial', size=(10,1), title='Inicial', target='start_date', format='%d/%m/%Y')],
                 [sg.InputText(key='final_date', size=(20,1)), sg.CalendarButton('Data Final', size=(10,1), title='Final', target='final_date', format='%d/%m/%Y')],
+            ],
+            [
+                sg.Button('',key=CreateSpreadsheet.MONTH, tooltip='Mês Atual', size=(20, 10), image_filename='src/assets/calendar/month.png'),
+                sg.Button('',key=CreateSpreadsheet.TODAY, tooltip='Hoje', size=(20, 10), image_filename='src/assets/calendar/today.png'),
+                sg.Button('',key=CreateSpreadsheet.YESTERDAY, tooltip='Ontem', size=(20, 10), image_filename='src/assets/calendar/yesterday.png'),
+                sg.Button('',key=CreateSpreadsheet.LAST_WEEK, tooltip='Semana Anterior', size=(20, 10), image_filename='src/assets/calendar/last_week.png'),
             ],
             [sg.ProgressBar(100, key='progressBar', visible=False, bar_color=('green', 'gray'), size=(30,30))],
             [
