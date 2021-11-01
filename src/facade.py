@@ -12,10 +12,11 @@ class Facade:
     def read_afd(self, afd_file_path, progressBar):
         ReadAFDFile(afd_file_path=afd_file_path, progressBar=progressBar).read_and_save_in_database()
     
-    def create_spreadsheet(self, month, year, destiny_folder, progressBar = None):
+    def create_spreadsheet(self, start_date, final_date, destiny_folder, progressBar = None):
+        print(start_date, final_date)
         if not progressBar is None:
             progressBar.update(50)
-        Excel().save_month_db_spreadsheet(int(year), int(month), destiny_folder)
+        Excel().save_period_db_spreadsheet(start_date, final_date, destiny_folder)
         if not progressBar is None:
             progressBar.update(100)
     
