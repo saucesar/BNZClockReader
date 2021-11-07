@@ -246,19 +246,20 @@ class CreateSpreadsheet(Screen):
             event, values = self.window.read()
             destiny_folder = self.facade.get_spreadsheet_folder()
             try:
+                print(event, values)
                 if event == 'ok':
                     
                     if destiny_folder == '' or destiny_folder is None:
                         FolderSelect(self.facade).show()
                         destiny_folder = self.facade.get_spreadsheet_folder()
 
-                        start_date = self.date_to_dict(values['start_date'])
-                        final_date = self.date_to_dict(values['final_date'])
+                    start_date = self.date_to_dict(values['start_date'])
+                    final_date = self.date_to_dict(values['final_date'])
                             
-                        self.window['progressBar'].update(visible=True, current_count=0)
+                    self.window['progressBar'].update(visible=True, current_count=0)
 
-                        self.facade.create_spreadsheet(start_date, final_date, destiny_folder, self.window['progressBar'])
-                        sg.popup_notify(title='Planilha gerada\nSalva em {}'.format(destiny_folder), display_duration_in_ms=3000, location=(500,100))
+                    self.facade.create_spreadsheet(start_date, final_date, destiny_folder, self.window['progressBar'])
+                    sg.popup_notify(title='Planilha gerada\nSalva em {}'.format(destiny_folder), display_duration_in_ms=3000, location=(500,100))
 
                 elif event == CreateSpreadsheet.MONTH:
                     start_date =  self.date_to_dict(date.today().replace(day=1).__str__(), '-', year_index=0, day_index=2)
@@ -312,9 +313,15 @@ class CreateSpreadsheet(Screen):
         return [
             [sg.Text("Selecione o período ou um dos botões rápidos",font=('Times', 20))],
             [
-                [sg.InputText(key='start_date', size=(20,1)), sg.CalendarButton('Data Inicial', size=(10,1), title='Inicial', target='start_date', format='%d/%m/%Y')],
-                [sg.InputText(key='final_date', size=(20,1)), sg.CalendarButton('Data Final', size=(10,1), title='Final', target='final_date', format='%d/%m/%Y')],
+                [sg.InputText(key='start_date', size=(20,1), disabled=True), sg.CalendarButton('Data Inicial', size=(10,1), title='Inicial', target='start_date', format='%d/%m/%Y')],
+                [sg.InputText(key='final_date', size=(20,1), disabled=True), sg.CalendarButton('Data Final', size=(10,1), title='Final', target='final_date', format='%d/%m/%Y')],
             ],
+            [
+                self.oKbutton(btn_tooltype='Pressione ok para gerar a planilha'),
+                self.exitButton(btn_tooltype='Sair desta tela.'),
+            ],
+            [ sg.HorizontalSeparator(), ],
+            [ sg.Text('Opções Rápidas',font=('Times', 20)), ],
             [
                 sg.Button('',key=CreateSpreadsheet.MONTH, tooltip='Mês Atual', size=(20, 10), image_filename='src/assets/calendar/month.png'),
                 sg.Button('',key=CreateSpreadsheet.TODAY, tooltip='Hoje', size=(20, 10), image_filename='src/assets/calendar/today.png'),
@@ -322,10 +329,7 @@ class CreateSpreadsheet(Screen):
                 sg.Button('',key=CreateSpreadsheet.LAST_WEEK, tooltip='Semana Anterior', size=(20, 10), image_filename='src/assets/calendar/last_week.png'),
             ],
             [sg.ProgressBar(100, key='progressBar', visible=False, bar_color=('green', 'gray'), size=(30,30))],
-            [
-                self.oKbutton(btn_tooltype='Pressione ok para gerar a planilha'),
-                self.exitButton(btn_tooltype='Sair desta tela.'),
-            ]
+            [ sg.HorizontalSeparator(), ],
         ]
 
 if __name__ == '__main__':
