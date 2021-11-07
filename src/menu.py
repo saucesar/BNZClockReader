@@ -175,7 +175,10 @@ class FileSelect(Screen):
             if event == 'exit' or event == sg.WIN_CLOSED:
                 self.window.close()
                 return None
-            
+    
+    def set_size(self, size=(500, 300)):
+        return super().set_size(size=size)
+
     def get_layout(self):
         return [
             [sg.Text(text="Seleção de Arquivo",font=30)],
@@ -212,6 +215,9 @@ class FolderSelect(Screen):
                 break
 
         self.window.close()
+        
+    def set_size(self, size=(500, 300)):
+        return super().set_size(size=size)
 
     def get_layout(self):
         return [
