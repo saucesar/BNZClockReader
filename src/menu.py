@@ -252,7 +252,6 @@ class CreateSpreadsheet(Screen):
             event, values = self.window.read()
             destiny_folder = self.facade.get_spreadsheet_folder()
             try:
-                print(event, values)
                 if event == 'ok':
                     
                     if destiny_folder == '' or destiny_folder is None:
@@ -318,6 +317,16 @@ class CreateSpreadsheet(Screen):
     def get_layout(self):
         return [
             [sg.Text("Selecione o período ou um dos botões rápidos",font=('Times', 20))],
+            [sg.HorizontalSeparator()],
+            [sg.Text('Opções Rápidas',font=('Times', 20))],
+            [
+                sg.Button(CreateSpreadsheet.MONTH, key=CreateSpreadsheet.MONTH, tooltip='Mês Atual', size=(20, 10), image_filename='src/assets/calendar/month.png'),
+                sg.Button(CreateSpreadsheet.TODAY, key=CreateSpreadsheet.TODAY, tooltip='Hoje', size=(20, 10), image_filename='src/assets/calendar/today.png'),
+                sg.Button(CreateSpreadsheet.YESTERDAY, key=CreateSpreadsheet.YESTERDAY, tooltip='Ontem', size=(20, 10), image_filename='src/assets/calendar/yesterday.png'),
+                sg.Button(CreateSpreadsheet.LAST_WEEK,key=CreateSpreadsheet.LAST_WEEK, tooltip='Semana Anterior', size=(20, 10), image_filename='src/assets/calendar/last_week.png'),
+            ],
+            [sg.ProgressBar(100, key='progressBar', visible=False, bar_color=('green', 'gray'), size=(30,30))],
+            [sg.HorizontalSeparator()],
             [
                 [sg.InputText(key='start_date', size=(20,1), disabled=True), sg.CalendarButton('Data Inicial', size=(10,1), title='Inicial', target='start_date', format='%d/%m/%Y')],
                 [sg.InputText(key='final_date', size=(20,1), disabled=True), sg.CalendarButton('Data Final', size=(10,1), title='Final', target='final_date', format='%d/%m/%Y')],
@@ -326,16 +335,6 @@ class CreateSpreadsheet(Screen):
                 self.oKbutton(btn_tooltype='Pressione ok para gerar a planilha'),
                 self.exitButton(btn_tooltype='Sair desta tela.'),
             ],
-            [ sg.HorizontalSeparator(), ],
-            [ sg.Text('Opções Rápidas',font=('Times', 20)), ],
-            [
-                sg.Button('',key=CreateSpreadsheet.MONTH, tooltip='Mês Atual', size=(20, 10), image_filename='src/assets/calendar/month.png'),
-                sg.Button('',key=CreateSpreadsheet.TODAY, tooltip='Hoje', size=(20, 10), image_filename='src/assets/calendar/today.png'),
-                sg.Button('',key=CreateSpreadsheet.YESTERDAY, tooltip='Ontem', size=(20, 10), image_filename='src/assets/calendar/yesterday.png'),
-                sg.Button('',key=CreateSpreadsheet.LAST_WEEK, tooltip='Semana Anterior', size=(20, 10), image_filename='src/assets/calendar/last_week.png'),
-            ],
-            [sg.ProgressBar(100, key='progressBar', visible=False, bar_color=('green', 'gray'), size=(30,30))],
-            [ sg.HorizontalSeparator(), ],
         ]
 
 if __name__ == '__main__':
