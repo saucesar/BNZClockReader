@@ -10,6 +10,9 @@ from database.create_tables import TableManager
 from calendar import monthrange
 
 class Screen:
+
+    ASSET_VERSION='v2'
+
     def show(self):
         sg.popup_notify(title='Implement Show in {}'.format(self.__class__.__name__), display_duration_in_ms=1000, location=(500,100))
 
@@ -26,10 +29,10 @@ class Screen:
         return sg.Window(self.title, self.layout, size=self.set_size(), margins=(50, 50), location=(300,100), element_justification='c', resizable=True, finalize=True)
 
     def oKbutton(self, btn_key='ok', btn_tooltype = ''):
-        return sg.Button('', key=btn_key, tooltip=btn_tooltype, image_filename='src/assets/confirm-96px.png')
+        return sg.Button('', key=btn_key, tooltip=btn_tooltype, image_filename=f'src/assets/{Screen.ASSET_VERSION}/confirm-96px.png')
     
     def exitButton(self, btn_key='exit', btn_tooltype = ''):
-        return sg.Button('', key=btn_key, tooltip=btn_tooltype, image_filename='src/assets/exit3-96px.png')
+        return sg.Button('', key=btn_key, tooltip=btn_tooltype, image_filename=f'src/assets/{Screen.ASSET_VERSION}/exit3-96px.png')
 
 class MenuScreen(Screen):
 
@@ -48,6 +51,7 @@ class MenuScreen(Screen):
         #sg.theme("LightBrown1")
         #sg.theme("LightGray")
         sg.theme("Reddit")
+        #sg.theme("SystemDefaultForReal")
         self.layout = self.get_layout()
         self.title = 'Clock Reader'
         self.window = self.get_window()
@@ -95,13 +99,13 @@ class MenuScreen(Screen):
         layout = [
             [ sg.Menu(menu_options) ],
             [
-                sg.Button('', key=MenuScreen.READ_AFD_FILE, tooltip='Ler Arquivo AFD', size=(20, 10), image_filename='src/assets/file3-96px.png'),
-                sg.Button('', key=MenuScreen.CHANGE_AFD_PATH, tooltip='Alterar arquivo AFD', size=(20, 10), image_filename='src/assets/change-file-96px.png'),
-                sg.Button('', key=MenuScreen.CREATE_SPREADSHEET, tooltip='Gerar Planilha', size=(20, 10), image_filename='src/assets/excel-96px.png'),
-                sg.Button('', key=MenuScreen.CHOOSE_SPREADSHEET_PATH, tooltip='Selecionar pasta destino de Planilhas', size=(20, 10), image_filename='src/assets/folder-96px.png'),
-                sg.Button('', key=MenuScreen.EXIT, tooltip='Sair do Sistema', size=(20,10), image_filename='src/assets/exit2-96px.png'),
+                sg.Button('', key=MenuScreen.READ_AFD_FILE, tooltip='Ler Arquivo AFD', size=(20, 10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/file3-96px.png'),
+                sg.Button('', key=MenuScreen.CHANGE_AFD_PATH, tooltip='Alterar arquivo AFD', size=(20, 10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/change-file-96px.png'),
+                sg.Button('', key=MenuScreen.CREATE_SPREADSHEET, tooltip='Gerar Planilha', size=(20, 10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/excel-96px.png'),
+                sg.Button('', key=MenuScreen.CHOOSE_SPREADSHEET_PATH, tooltip='Selecionar pasta destino de Planilhas', size=(20, 10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/folder-96px.png'),
+                sg.Button('', key=MenuScreen.EXIT, tooltip='Sair do Sistema', size=(20,10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/exit2-96px.png'),
             ],
-            [ sg.Image(source='src/assets/clock2.png', size=(100,100),key="image", expand_x=True, expand_y=True)],
+            [ sg.Image(source=f'src/assets/{Screen.ASSET_VERSION}/clock2.png', size=(100,100),key="image", expand_x=True, expand_y=True)],
             [ sg.Text(text='- Geração planilhas', font=("Helvetica", 20)) ],
             [ sg.Text(text='- Calculo de horários', font=("Helvetica", 20)) ],
             [ sg.Text(text='- Erros de ponto', font=("Helvetica", 20)) ],
@@ -142,7 +146,7 @@ class ReadAFDScreen(Screen):
                 self.window.close()
             else:
                 self.window.Element('progressBar').update(visible=True, current_count=0)
-                self.show_notifycation('Lendo arquivo, por favor aguarde ...')
+                #self.show_notifycation('Lendo arquivo, por favor aguarde ...')
                 self.facade.read_afd(afd_path, self.window['progressBar'])
                 self.facade.save_afd_file_path(afd_path)
                 self.show_notifycation('Leitura do arquivo concluída.')
@@ -320,10 +324,10 @@ class CreateSpreadsheet(Screen):
             [sg.HorizontalSeparator()],
             [sg.Text('Opções Rápidas',font=('Times', 20))],
             [
-                sg.Button(CreateSpreadsheet.MONTH, key=CreateSpreadsheet.MONTH, tooltip='Mês Atual', size=(20, 10), image_filename='src/assets/calendar/month.png'),
-                sg.Button(CreateSpreadsheet.TODAY, key=CreateSpreadsheet.TODAY, tooltip='Hoje', size=(20, 10), image_filename='src/assets/calendar/today.png'),
-                sg.Button(CreateSpreadsheet.YESTERDAY, key=CreateSpreadsheet.YESTERDAY, tooltip='Ontem', size=(20, 10), image_filename='src/assets/calendar/yesterday.png'),
-                sg.Button(CreateSpreadsheet.LAST_WEEK,key=CreateSpreadsheet.LAST_WEEK, tooltip='Semana Anterior', size=(20, 10), image_filename='src/assets/calendar/last_week.png'),
+                sg.Button('', key=CreateSpreadsheet.MONTH, tooltip='Mês Atual', size=(20, 10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/calendar/month.png'),
+                sg.Button('', key=CreateSpreadsheet.TODAY, tooltip='Hoje', size=(20, 10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/calendar/today.png'),
+                sg.Button('', key=CreateSpreadsheet.YESTERDAY, tooltip='Ontem', size=(20, 10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/calendar/yesterday.png'),
+                sg.Button('',key=CreateSpreadsheet.LAST_WEEK, tooltip='Semana Anterior', size=(20, 10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/calendar/last_week.png'),
             ],
             [sg.ProgressBar(100, key='progressBar', visible=False, bar_color=('green', 'gray'), size=(30,30))],
             [sg.HorizontalSeparator()],
