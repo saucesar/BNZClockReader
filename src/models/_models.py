@@ -138,12 +138,12 @@ class Spreadsheet:
                 if error_journey or error_lunch or error_break_working or error_extra:
                     errors.append(row)
                     line_error += 1
-                
+
                 previous = t
                 line += 1
                     
-        markings.add_table(self.create_table('TableStyleMedium9', 'Marcações'))
-        errors.add_table(self.create_table('TableStyleMedium9', 'Erros'))
+        markings.add_table(self.create_table('TableStyleMedium9', 'Marcações', line))
+        errors.add_table(self.create_table('TableStyleMedium9', 'Erros', line_error))
 
         if os.name == 'posix': destiny_folder += '/'
         elif os.name == 'nt': destiny_folder += '\\'
@@ -156,8 +156,8 @@ class Spreadsheet:
 
     def check_first_journey(self, first_journey, markings, errors, line, line_error):
         if first_journey != '' and first_journey > timedelta(hours=4, minutes=30):
-            #markings[f'H{line}'].fill = PatternFill('solid', fgColor='FF0000')
-            #errors[f'H{line_error}'].fill = PatternFill('solid', fgColor='FF2000')
+            #markings[f'H{line}'].font = Font(color="FF0000", italic=True)
+            #errors[f'H{line_error}'].font = Font(color="FF0000", italic=True)
 
             return (True, 'Mais que 4h 30m no primeiro turno, ')
         else:
@@ -165,21 +165,17 @@ class Spreadsheet:
 
     def check_lunch(self, lunch, markings, errors, line, line_error):
         if lunch != '' and lunch > timedelta(hours=1, minutes=50):
-            #markings[f'I{line}'].fill = PatternFill('solid', fgColor='FF2000')
-            #errors[f'I{line_error}'].fill = PatternFill('solid', fgColor='FF2000')
-            #red_fill = PatternFill(bgColor="FF0000", fgColor='FF0000')
-            #rule = Rule(type="cellIs", operator='greaterThan', dxf= DifferentialStyle(fill=red_fill), formula=["01:50:00"], stopIfTrue=False)
-            #markings.conditional_formatting.add(f'I{line}:I{line}', rule)
-            #errors.conditional_formatting.add(f'I{line_error}:I{line_error}', rule)
-  
+            #markings[f'I{line}'].font = Font(color="FF0000", italic=True)
+            #errors[f'I{line_error}'].font = Font(color="FF0000", italic=True)
+            
             return (True, 'Mais que 1h 50m de almoço, ')
         else:
             return (False, '')
 
     def check_break_working(self, break_working, markings, errors, line, line_error):
         if break_working != '' and break_working < timedelta(hours=12):
-            #markings[f'J{line}'].fill = PatternFill('solid', fgColor='FF2000')
-            #errors[f'J{line_error}'].fill = PatternFill('solid', fgColor='FF2000')
+            #markings[f'J{line}'].font = Font(color="FF0000", italic=True)
+            #errors[f'J{line_error}'].font = Font(color="FF0000", italic=True)
 
             return (True, 'Menos que 12h entre Jornadas, ')
         else:
@@ -187,16 +183,16 @@ class Spreadsheet:
 
     def check_extra(self, extra, markings, errors, line, line_error):
         if extra != '' and extra > timedelta(minutes=30, hours=1):
-            #markings[f'K{line}'].fill = PatternFill('solid', fgColor='FF2000')
-            #errors[f'K{line_error}'].fill = PatternFill('solid', fgColor='FF2000')
+            #markings[f'K{line}'].font = Font(color="FF0000", italic=True)
+            #errors[f'K{line_error}'].font = Font(color="FF0000", italic=True)
 
             return (True, 'Mais que 01h 30m extra, ')
         else:
             return (False, '')
 
-    def create_table(self, name, displayName):
-        table = Table(displayName=displayName, ref="A1:L5000")
-        table.tableStyleInfo = TableStyleInfo(name=name, showFirstColumn=True, showLastColumn=True, showRowStripes=True, showColumnStripes=True)
+    def create_table(self, styleName, displayName, lines):
+        table = Table(displayName=displayName, ref=f"A1:L{lines}")
+        table.tableStyleInfo = TableStyleInfo(name=styleName, showFirstColumn=True, showLastColumn=True, showRowStripes=True, showColumnStripes=False)
 
         return table
 
