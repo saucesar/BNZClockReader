@@ -320,7 +320,6 @@ class CreateSpreadsheet(Screen):
 
     def get_layout(self):
         return [
-            [sg.Text("Selecione o período ou um dos botões rápidos",font=('Times', 20))],
             [sg.HorizontalSeparator()],
             [sg.Text('Opções Rápidas',font=('Times', 20))],
             [
@@ -331,6 +330,7 @@ class CreateSpreadsheet(Screen):
             ],
             [sg.ProgressBar(100, key='progressBar', visible=False, bar_color=('green', 'gray'), size=(30,30))],
             [sg.HorizontalSeparator()],
+            [sg.Text("Selecione o período desejado",font=('Times', 20))],
             [
                 [sg.InputText(key='start_date', size=(20,1), disabled=True), sg.CalendarButton('Data Inicial', size=(10,1), title='Inicial', target='start_date', format='%d/%m/%Y')],
                 [sg.InputText(key='final_date', size=(20,1), disabled=True), sg.CalendarButton('Data Final', size=(10,1), title='Final', target='final_date', format='%d/%m/%Y')],
@@ -339,6 +339,7 @@ class CreateSpreadsheet(Screen):
                 self.oKbutton(btn_tooltype='Pressione ok para gerar a planilha'),
                 self.exitButton(btn_tooltype='Sair desta tela.'),
             ],
+            [sg.HorizontalSeparator()],
         ]
 
 if __name__ == '__main__':
