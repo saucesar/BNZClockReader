@@ -3,6 +3,7 @@ from os.path import dirname, join, abspath
 sys.path.insert(0, abspath(join(dirname(__file__), 'models')))
 from models._models import Spreadsheet as Excel
 from models._models import KeyValue
+from models._models import Employee
 from read_afd import ReadAFDFile
 from database.create_tables import *
 from models._models import Spreadsheet as Excel
@@ -44,3 +45,5 @@ class Facade:
         except:
             return ''
         
+    def get_employees(self):
+        return Employee.all_to_list()
