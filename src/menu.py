@@ -41,6 +41,7 @@ class MenuScreen(Screen):
     CHOOSE_SPREADSHEET_PATH = 'Alterar pasta destino de Planilhas'
     ABOUT = 'Sobre'
     CREATE_SPREADSHEET = 'Gerar Planilha'
+    EMPLOYEES = 'Funcionários'
     EXIT = 'Sair'
 
     def __init__(self) -> None:
@@ -71,6 +72,8 @@ class MenuScreen(Screen):
                 self.change_afd_file_path()
             elif event == MenuScreen.ABOUT:
                 self.show_about()
+            elif event == MenuScreen.EMPLOYEES:
+                EmployeeMenu(self.facade).show()
             elif event == 'exit' or event == sg.WIN_CLOSED or event == MenuScreen.EXIT:
                 break
 
@@ -102,7 +105,10 @@ class MenuScreen(Screen):
                 sg.Button('', key=MenuScreen.READ_AFD_FILE, tooltip='Ler Arquivo AFD', size=(20, 10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/file3-96px.png'),
                 sg.Button('', key=MenuScreen.CHANGE_AFD_PATH, tooltip='Alterar arquivo AFD', size=(20, 10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/change-file-96px.png'),
                 sg.Button('', key=MenuScreen.CREATE_SPREADSHEET, tooltip='Gerar Planilha', size=(20, 10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/excel-96px.png'),
+            ],
+            [
                 sg.Button('', key=MenuScreen.CHOOSE_SPREADSHEET_PATH, tooltip='Selecionar pasta destino de Planilhas', size=(20, 10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/folder-96px.png'),
+                sg.Button('', key=MenuScreen.EMPLOYEES, tooltip='Lista de Funcionários', size=(20, 10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/employees-96px.png'),
                 sg.Button('', key=MenuScreen.EXIT, tooltip='Sair do Sistema', size=(20,10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/exit2-96px.png'),
             ],
             [ sg.Image(source=f'src/assets/{Screen.ASSET_VERSION}/clock2.png', size=(100,100),key="image", expand_x=True, expand_y=True)],
@@ -341,6 +347,76 @@ class CreateSpreadsheet(Screen):
             ],
             [sg.HorizontalSeparator()],
         ]
+
+class EmployeeMenu(Screen):
+
+    TABLE_EMPLOYEES = 'Lista de Funcionários'
+    SHOW_DETAILS = 'Detalhes'
+    SHOW_GRAPHICS = 'Gráficos'
+
+    def __init__(self,facade = None) -> None:
+        self.facade = facade
+        self.layout = self.get_layout()
+        self.title = 'Funcionários'
+        self.window = self.get_window()
+    
+    def show(self):
+        selected_employee = None
+
+        while True:
+            event, values = self.window.read()
+            
+            if event == 'ok':
+                pass
+            elif event == EmployeeMenu.SHOW_DETAILS:
+                if selected_employee is None:
+                    self.show_error('Selecione um Funcionário')
+                else:
+                    print(selected_employee)
+            elif event == EmployeeMenu.SHOW_GRAPHICS:
+                if selected_employee is None:
+                    self.show_error('Selecione um Funcionário')
+                else:
+                    print(selected_employee)
+            elif isinstance(event, tuple):
+                selected_employee = self.window[EmployeeMenu.TABLE_EMPLOYEES].get()[event[2][0]]
+            elif event == 'exit' or event == sg.WIN_CLOSED or event == MenuScreen.EXIT:
+                break
+
+        self.window.close()
+
+    def get_layout(self):
+        layout = [
+            [
+                self.create_employees_table(self.facade.get_employees()),
+            ],
+            [
+                sg.Button('', key=EmployeeMenu.SHOW_GRAPHICS, tooltip='Gráfico do funcionário', size=(20,10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/employee/graphic2-96px.png'),
+                sg.Button('', key=EmployeeMenu.SHOW_DETAILS, tooltip='Ver detalhes de um funcionário', size=(20,10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/employee/details-96px.png'),
+            ],
+            [
+                #self.oKbutton(btn_tooltype='Pressione ok para gerar a planilha'),
+                #self.exitButton(btn_tooltype='Sair desta tela.'),
+            ],
+        ]
+
+        return layout
+    
+    def create_employees_table(self, employees):
+        return sg.Table(employees,
+                headings=['ID', 'Nome', 'PIS'],
+                max_col_width=25,
+                auto_size_columns=True,
+                display_row_numbers=False,
+                justification='left',
+                num_rows=10,
+                key=EmployeeMenu.TABLE_EMPLOYEES,
+                selected_row_colors='red on yellow',
+                enable_events=True,
+                expand_x=True,
+                expand_y=True,
+                enable_click_events=True,
+                tooltip='Tabela de Funcionários')
 
 if __name__ == '__main__':
     MenuScreen().show()
