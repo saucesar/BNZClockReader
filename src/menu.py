@@ -391,7 +391,7 @@ class EmployeeMenu(Screen):
                 self.create_employees_table(self.facade.get_employees()),
             ],
             [
-                sg.Button('', key=EmployeeMenu.SHOW_GRAPHICS, tooltip='Gráfico do funcionário', size=(20,10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/employee/graphic2-96px.png'),
+                sg.Button('', key=EmployeeMenu.SHOW_GRAPHICS, tooltip='Gráfico do funcionário', size=(20,10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/employee/graphic-96px.png'),
                 sg.Button('', key=EmployeeMenu.SHOW_DETAILS, tooltip='Ver detalhes de um funcionário', size=(20,10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/employee/details-96px.png'),
             ],
             [
