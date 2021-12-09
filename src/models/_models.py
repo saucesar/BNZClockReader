@@ -106,8 +106,10 @@ class Spreadsheet:
     def save_period_db_spreadsheet(self, start_date, final_date, destiny_folder):
         workbook = self.create_workbook()
         markings = workbook.active
+        
         markings.title = 'Marcações'
         markings.freeze_panes = 'M2'
+
         errors = workbook.create_sheet('Erros')
         errors.freeze_panes = 'M2'
 
