@@ -24,7 +24,7 @@ class Screen:
     def show_error(self, msg, duration_in_seconds=1):
         sg.popup_notify(title=msg, display_duration_in_ms=duration_in_seconds*1000, location=(500,100))
 
-    def set_size(self, size=(700, 500)):
+    def set_size(self, size=(700, 650)):
         return size
 
     def get_window(self):
@@ -251,6 +251,7 @@ class CreateSpreadsheet(Screen):
     TODAY = 'Hoje'
     YESTERDAY = 'Ontem'
     LAST_WEEK = 'Ultima Semana'
+    CURRENT_WEEK = 'Semana Atual'
     MONTH = 'Mes'
     LAST_MONTH = 'Mes anterior'
 
@@ -324,6 +325,18 @@ class CreateSpreadsheet(Screen):
                     self.facade.create_spreadsheet(start_date, final_date, destiny_folder, self.window['progressBar'])
                     sg.popup_notify(title='Planilha gerada\nSalva em {}'.format(destiny_folder), display_duration_in_ms=3000, location=(500,100))
 
+                elif event == CreateSpreadsheet.CURRENT_WEEK:
+                    start = date.today() - timedelta(days=date.today().weekday()+1)
+                    final = date.today() + timedelta(days=date.today().weekday()-1)
+
+                    start_date = self.date_to_dict(start.__str__(), '-', year_index=0, day_index=2)
+                    final_date = self.date_to_dict(final.__str__(), '-', year_index=0, day_index=2)
+
+                    self.window['progressBar'].update(visible=True, current_count=0)
+
+                    self.facade.create_spreadsheet(start_date, final_date, destiny_folder, self.window['progressBar'])
+                    sg.popup_notify(title='Planilha gerada\nSalva em {}'.format(destiny_folder), display_duration_in_ms=3000, location=(500,100))
+
                 elif event == 'exit' or event == sg.WIN_CLOSED:
                     break
 
@@ -341,11 +354,15 @@ class CreateSpreadsheet(Screen):
             [sg.HorizontalSeparator()],
             [sg.Text('Opções Rápidas',font=('Times', 20))],
             [
-                sg.Button('', key=CreateSpreadsheet.LAST_MONTH, tooltip='Mês Anterior', size=(20, 10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/calendar/last_month.png'),
-                sg.Button('', key=CreateSpreadsheet.MONTH, tooltip='Mês Atual', size=(20, 10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/calendar/month.png'),
                 sg.Button('', key=CreateSpreadsheet.TODAY, tooltip='Hoje', size=(20, 10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/calendar/today.png'),
+                sg.Button('',key=CreateSpreadsheet.CURRENT_WEEK, tooltip='Semana Atual', size=(20, 10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/calendar/current_week.png'),
+
+                sg.Button('', key=CreateSpreadsheet.MONTH, tooltip='Mês Atual', size=(20, 10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/calendar/month.png'),
+            ],
+            [
                 sg.Button('', key=CreateSpreadsheet.YESTERDAY, tooltip='Ontem', size=(20, 10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/calendar/yesterday.png'),
                 sg.Button('',key=CreateSpreadsheet.LAST_WEEK, tooltip='Semana Anterior', size=(20, 10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/calendar/last_week.png'),
+                sg.Button('', key=CreateSpreadsheet.LAST_MONTH, tooltip='Mês Anterior', size=(20, 10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/calendar/last_month.png'),
             ],
             [sg.ProgressBar(100, key='progressBar', visible=False, bar_color=('green', 'gray'), size=(30,30))],
             [sg.HorizontalSeparator()],
