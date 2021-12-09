@@ -2,6 +2,8 @@ from re import split
 import sys
 import PySimpleGUI as sg
 from os.path import dirname, join, abspath
+
+from PySimpleGUI import Graph
 sys.path.insert(0, abspath(join(dirname(__file__), '..')))
 sys.path.insert(0, abspath(join(dirname(__file__), 'database')))
 from facade import Facade
@@ -250,6 +252,7 @@ class CreateSpreadsheet(Screen):
     YESTERDAY = 'Ontem'
     LAST_WEEK = 'Ultima Semana'
     MONTH = 'Mes'
+    LAST_MONTH = 'Mes anterior'
 
     def __init__(self,facade = None) -> None:
         self.layout = self.get_layout()
@@ -285,6 +288,15 @@ class CreateSpreadsheet(Screen):
                     self.facade.create_spreadsheet(start_date, final_date, destiny_folder, self.window['progressBar'])
                     sg.popup_notify(title='Planilha gerada\nSalva em {}'.format(destiny_folder), display_duration_in_ms=3000, location=(500,100))
         
+                elif event == CreateSpreadsheet.LAST_MONTH:
+                    start_date =  self.date_to_dict(date.today().replace(day=1, month=date.today().month-1).__str__(), '-', year_index=0, day_index=2)
+                    final_date =  self.date_to_dict(date.today().replace(day=monthrange(start_date['year'], start_date['month'])[1]).__str__(), '-', year_index=0, day_index=2)
+                    
+                    self.window['progressBar'].update(visible=True, current_count=0)
+
+                    self.facade.create_spreadsheet(start_date, final_date, destiny_folder, self.window['progressBar'])
+                    sg.popup_notify(title='Planilha gerada\nSalva em {}'.format(destiny_folder), display_duration_in_ms=3000, location=(500,100))
+                
                 elif event == CreateSpreadsheet.TODAY:
                     today =  self.date_to_dict(date.today().__str__(), '-', year_index=0, day_index=2)
 
@@ -329,6 +341,7 @@ class CreateSpreadsheet(Screen):
             [sg.HorizontalSeparator()],
             [sg.Text('Opções Rápidas',font=('Times', 20))],
             [
+                sg.Button('', key=CreateSpreadsheet.LAST_MONTH, tooltip='Mês Anterior', size=(20, 10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/calendar/last_month.png'),
                 sg.Button('', key=CreateSpreadsheet.MONTH, tooltip='Mês Atual', size=(20, 10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/calendar/month.png'),
                 sg.Button('', key=CreateSpreadsheet.TODAY, tooltip='Hoje', size=(20, 10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/calendar/today.png'),
                 sg.Button('', key=CreateSpreadsheet.YESTERDAY, tooltip='Ontem', size=(20, 10), image_filename=f'src/assets/{Screen.ASSET_VERSION}/calendar/yesterday.png'),
@@ -365,14 +378,14 @@ class EmployeeMenu(Screen):
 
         while True:
             event, values = self.window.read()
-            
+            print(selected_employee)
             if event == 'ok':
                 pass
             elif event == EmployeeMenu.SHOW_DETAILS:
                 if selected_employee is None:
                     self.show_error('Selecione um Funcionário')
                 else:
-                    print(selected_employee)
+                    EmployeeShow(selected_employee, self.facade).show()
             elif event == EmployeeMenu.SHOW_GRAPHICS:
                 if selected_employee is None:
                     self.show_error('Selecione um Funcionário')
@@ -418,5 +431,48 @@ class EmployeeMenu(Screen):
                 enable_click_events=True,
                 tooltip='Tabela de Funcionários')
 
+class EmployeeShow(Screen):
+
+    def __init__(self, employee,facade = None) -> None:
+        self.facade = facade
+        self.employee = employee
+        self.layout = self.get_layout()
+        self.title = 'Funcionários'
+        self.window = self.get_window()
+    
+    def show(self):
+        self.draw_graph()
+        while True:
+            event, values = self.window.read()
+            print(self.employee)
+            if event == 'ok':
+                pass
+            elif event == 'exit' or event == sg.WIN_CLOSED or event == MenuScreen.EXIT:
+                break
+
+        self.window.close()
+
+    def get_layout(self):
+        layout = [
+            [
+                sg.Text(self.employee[1])
+            ],
+            [
+                sg.Graph((500,500), (-250,-250), (500, 500), key='graph', expand_x=True, expand_y=True)
+            ],
+            [
+                #self.oKbutton(btn_tooltype='Pressione ok para gerar a planilha'),
+                #self.exitButton(btn_tooltype='Sair desta tela.'),
+            ],
+        ]
+        
+        return layout
+    
+    def draw_graph(self):
+        graph = self.window['graph']
+        for i in range(10):
+            graph.draw_rectangle(top_left=(10+i, 200), bottom_right=(120, 0), fill_color='green')
+            graph.draw_text(text=str(i), location=(i*100+15, i+10),color='red')
+            
 if __name__ == '__main__':
     MenuScreen().show()
