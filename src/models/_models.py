@@ -110,6 +110,10 @@ class Spreadsheet:
         markings.freeze_panes = 'M2'
         errors = workbook.create_sheet('Erros')
         errors.freeze_panes = 'M2'
+
+        warnings = workbook.create_sheet('Punições')
+        warnings.freeze_panes = 'M2'
+
         header = ['NOME', 'DIA','DATA', 'E1', 'S1', 'E2', 'S2', '1ª TURNO', 'ALMOÇO', 'INT.ENTRE.JORNADAS', 'HORA. EXTRA', 'OBS']
         #           A       B     C      D     E     F     G          H        I               J                   K          L
 
@@ -120,6 +124,7 @@ class Spreadsheet:
         total = employees.__len__()
         line = 2
         line_error = 2
+        line_warning = 2
 
         for index in track(range(0, total), 'Processando...'):
             e = employees[index]
@@ -134,10 +139,10 @@ class Spreadsheet:
 
                 row = [e.name, Spreadsheet.weekdays[t.date.weekday()], t.date, t.first_entry, t.first_exit, t.second_entry, t.second_exit, first_journey, lunch, break_working, extra ]
                 
-                error_journey, obs_journey = self.check_first_journey(first_journey, markings, errors, line, line_error)
-                error_lunch, obs_lunch = self.check_lunch(lunch, markings, errors, line, line_error)
-                error_break_working, obs_break_working = self.check_break_working(break_working, markings, errors, line, line_error)
-                error_extra, obs_extra = self.check_extra(extra, markings, errors, line, line_error)
+                error_journey, warning_journey, obs_journey = self.check_first_journey(first_journey, markings, errors, line, line_error)
+                error_lunch, warning_lunch, obs_lunch = self.check_lunch(lunch, markings, errors, line, line_error)
+                error_break_working, warning_break_working, obs_break_working = self.check_break_working(break_working, markings, errors, line, line_error)
+                error_extra, warning_extra, obs_extra = self.check_extra(extra, markings, errors, line, line_error)
                 
                 obs += obs_journey
                 obs += obs_lunch
@@ -150,12 +155,16 @@ class Spreadsheet:
                 if error_journey or error_lunch or error_break_working or error_extra:
                     errors.append(row)
                     line_error += 1
+                if warning_journey or warning_lunch or warning_break_working or warning_extra:
+                    warnings.append(row)
+                    line_warning += 1
 
                 previous = t
                 line += 1
                     
         markings.add_table(self.create_table('TableStyleMedium9', 'Marcações', line))
         errors.add_table(self.create_table('TableStyleMedium9', 'Erros', line_error))
+        warnings.add_table(self.create_table('TableStyleMedium9', 'Warnings', line_warning))
 
         if os.name == 'posix': destiny_folder += '/'
         elif os.name == 'nt': destiny_folder += '\\'
@@ -167,40 +176,38 @@ class Spreadsheet:
             os.startfile(file_name)
 
     def check_first_journey(self, first_journey, markings, errors, line, line_error):
+        if first_journey != '' and first_journey > timedelta(hours=5):
+            return (True, True, 'Mais que 5h no primeiro turno, ')#(Erro, Punição, Observação)
         if first_journey != '' and first_journey > timedelta(hours=4, minutes=30):
-            #markings[f'H{line}'].font = Font(color="FF0000", italic=True)
-            #errors[f'H{line_error}'].font = Font(color="FF0000", italic=True)
-
-            return (True, 'Mais que 4h 30m no primeiro turno, ')
+            return (True, False, 'Mais que 4h 30m no primeiro turno, ')
         else:
-            return (False, '')
+            return (False, False, '')
 
     def check_lunch(self, lunch, markings, errors, line, line_error):
+        if lunch != '' and lunch > timedelta(hours=2):
+            return (True, True, 'Mais que 2h 00m de almoço, ')
         if lunch != '' and lunch > timedelta(hours=1, minutes=50):
-            #markings[f'I{line}'].font = Font(color="FF0000", italic=True)
-            #errors[f'I{line_error}'].font = Font(color="FF0000", italic=True)
-            
-            return (True, 'Mais que 1h 50m de almoço, ')
+            return (True, False, 'Mais que 1h 50m de almoço, ')
+        if lunch != '' and lunch < timedelta(hours=1, minutes=15):
+            return (True, False, 'Menos que 1h 15m de almoço, ')
         else:
-            return (False, '')
+            return (False, False, '')
 
     def check_break_working(self, break_working, markings, errors, line, line_error):
+        if break_working != '' and break_working < timedelta(hours=11):
+            return (True, True, 'Menos que 11h entre Jornadas, ')
         if break_working != '' and break_working < timedelta(hours=12):
-            #markings[f'J{line}'].font = Font(color="FF0000", italic=True)
-            #errors[f'J{line_error}'].font = Font(color="FF0000", italic=True)
-
-            return (True, 'Menos que 12h entre Jornadas, ')
+            return (True, False, 'Menos que 12h entre Jornadas, ')
         else:
-            return (False, '')
+            return (False, False, '')
 
     def check_extra(self, extra, markings, errors, line, line_error):
+        if extra != '' and extra > timedelta(hours=2):
+            return (True, False, 'Mais que 02h 00m extras, ')
         if extra != '' and extra > timedelta(minutes=30, hours=1):
-            #markings[f'K{line}'].font = Font(color="FF0000", italic=True)
-            #errors[f'K{line_error}'].font = Font(color="FF0000", italic=True)
-
-            return (True, 'Mais que 01h 30m extra, ')
+            return (True, False, 'Mais que 01h 30m extra, ')
         else:
-            return (False, '')
+            return (False, False, '')
 
     def create_table(self, styleName, displayName, lines):
         table = Table(displayName=displayName, ref=f"A1:L{lines}")
