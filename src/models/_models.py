@@ -36,7 +36,7 @@ class Employee(Model):
         return "ID: "+str(self.id)+" NAME: "+self.name+" PIS: "+self.pis+" CREATED_AT: "+self.created_at.__str__()+" UPDATED_AT: "+self.updated_at.__str__()
     
     def to_list(self):
-        return [f"{self.id}", self.name, self.pis, f"{self.created_at}", f"{self.updated_at}"]
+        return [self.id, self.name, self.pis, f"{self.created_at}", f"{self.updated_at}"]
     
     @staticmethod
     def all_to_list():
