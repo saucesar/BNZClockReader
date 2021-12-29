@@ -31,8 +31,8 @@ class BuildExecutable:
             os.system('pyinstaller src/menu.py src/database/create_tables.py src/models/_imports.py src/models/_models.py '+\
                       'src/models/_openpyxl.py src/models/_peewee_orm.py -n ClockReader --noconsole --clean --onefile')
             os.system('mkdir logs')
-            os.system('mkdir dist/src/')
-            os.system('copy src\\assets\\* dist\\src\\assets')
+            os.system('mkdir dist/src')
+            os.system('copy src/assets/* dist/src/assets/')
         else:
             os.system('echo "OS not supported."')
 
