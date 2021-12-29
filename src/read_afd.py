@@ -1,3 +1,5 @@
+from logging import exception
+from os import add_dll_directory
 import sys,time
 from rich.progress import track
 from datetime import datetime
@@ -12,11 +14,16 @@ class ReadAFDFile:
     def __init__(self, afd_file_path, progressBar = None) -> None:
         self.file_path = afd_file_path
         self.progressBar = progressBar
+        self.open_afd_file()
+        self.afd_file = self.open_afd_file()
+        if(self.afd_file is None):
+            raise Exception('Arquivo afd não encontrado!')
         
     def open_afd_file(self):
         try:
-            self.afd_file = open(self.file_path, 'r')
+            afd_file = open(self.file_path, 'r')
             logging.info("OPEN FILE: "+self.file_path)
+            return afd_file
         except Exception as e:
             logging.error('EXCEPTION: '+ e.__class__.__name__+' MESSAGE:  '+e.__str__())
 
@@ -92,7 +99,6 @@ class ReadAFDFile:
 
     def read_and_save_in_database(self):
         self.start_time_count()
-        self.open_afd_file()
         file_line_amount = self.afd_file.readlines().__len__()
         percent_count = 0
         kv_lines = self.get_afd_lines_key_value()
