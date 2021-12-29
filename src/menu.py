@@ -3,7 +3,6 @@ import sys
 import PySimpleGUI as sg
 from os.path import dirname, join, abspath
 
-from PySimpleGUI import Graph
 sys.path.insert(0, abspath(join(dirname(__file__), '..')))
 sys.path.insert(0, abspath(join(dirname(__file__), 'database')))
 from facade import Facade
@@ -153,12 +152,15 @@ class ReadAFDScreen(Screen):
             if afd_path == '' or afd_path is None:
                 self.window.close()
             else:
-                self.window.Element('progressBar').update(visible=True, current_count=0)
-                #self.show_notifycation('Lendo arquivo, por favor aguarde ...')
-                self.facade.read_afd(afd_path, self.window['progressBar'])
-                self.facade.save_afd_file_path(afd_path)
-                self.show_notifycation('Leitura do arquivo concluída.')
-                self.window.close()
+                try:
+                    self.window.Element('progressBar').update(visible=True, current_count=0)
+                    #self.show_notifycation('Lendo arquivo, por favor aguarde ...')
+                    self.facade.read_afd(afd_path, self.window['progressBar'])
+                    self.facade.save_afd_file_path(afd_path)
+                    self.show_notifycation('Leitura do arquivo concluída.')
+                    self.window.close()
+                except Exception as e:
+                     self.show_notifycation(e.__str__())
 
     def get_layout(self):
         return [
