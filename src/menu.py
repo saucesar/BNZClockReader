@@ -293,7 +293,7 @@ class CreateSpreadsheet(Screen):
         
                 elif event == CreateSpreadsheet.LAST_MONTH:
                     start_date =  self.date_to_dict(date.today().replace(day=1, month=date.today().month-1).__str__(), '-', year_index=0, day_index=2)
-                    final_date =  self.date_to_dict(date.today().replace(day=monthrange(start_date['year'], start_date['month'])[1]).__str__(), '-', year_index=0, day_index=2)
+                    final_date =  self.date_to_dict(date.today().replace(day=monthrange(start_date['year'], start_date['month'])[1], month=start_date['month']).__str__(), '-', year_index=0, day_index=2)
                     
                     self.window['progressBar'].update(visible=True, current_count=0)
 
