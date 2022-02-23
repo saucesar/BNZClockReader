@@ -1,7 +1,4 @@
-from logging import exception
-from os import add_dll_directory
 import sys,time
-from rich.progress import track
 from datetime import datetime
 from os.path import dirname, join, abspath
 sys.path.insert(0, abspath(join(dirname(__file__), 'models')))
@@ -98,9 +95,7 @@ class ReadAFDFile:
             j += 1
 
     def read_and_save_in_database(self):
-        self.start_time_count()
         file_line_amount = self.afd_file.readlines().__len__()
-        percent_count = 0
         kv_lines = self.get_afd_lines_key_value()
         
         try:
@@ -112,14 +107,15 @@ class ReadAFDFile:
 
         self.afd_file.seek(0)
         self.jump_lines(lines_count)
-        range_size = file_line_amount - lines_count
+        percent_count = 0
         
-        for i in track(range(range_size), description='Lendo arquivo...'):
+        for line in self.afd_file.readlines():
             lines_count += 1
             percent_count += 1
-            line = self.afd_file.readline()
+            
             if not self.progressBar is None:
-                self.progressBar.update(current_count=(i*100/range_size))
+                percent = (lines_count/file_line_amount*100)
+                self.progressBar.update(current_count=percent)
             
             try:
                 kv_lines.value = lines_count
@@ -134,5 +130,3 @@ class ReadAFDFile:
                 self.create_time_clock_marking(line)
 
         self.close_afd_file()
-        time = self.end_time_count()
-        sys.stdout.write("TIME ELAPSED: %s" % time)
