@@ -1,4 +1,4 @@
-from openpyxl import workbook
+from openpyxl import Workbook
 from _peewee_orm import *
 from _imports import *
 from _openpyxl import *
@@ -116,7 +116,7 @@ class Spreadsheet:
         warnings = workbook.create_sheet('Punições')
         warnings.freeze_panes = 'M2'
 
-        header = ['NOME', 'DIA','DATA', 'E1', 'S1', 'E2', 'S2', '1ª TURNO', 'ALMOÇO', 'INT.ENTRE.JORNADAS', 'HORA. EXTRA', 'OBS']
+        header = ['NOME', 'DIA','DATA', 'E1', 'S1', 'E2', 'S2', '1ª TURNO', 'ALMOÇO', 'INT. ENTRE JORNADAS', 'HORA EXTRA', 'OBS']
         #           A       B     C      D     E     F     G          H        I               J                   K          L
 
         markings.append(header)
@@ -168,14 +168,17 @@ class Spreadsheet:
         errors.add_table(self.create_table('TableStyleMedium9', 'Erros', line_error))
         warnings.add_table(self.create_table('TableStyleMedium9', 'Warnings', line_warning))
 
-        if os.name == 'posix': destiny_folder += '/'
-        elif os.name == 'nt': destiny_folder += '\\'
-        
+        if os.name == 'posix':
+            destiny_folder += '/'
+        elif os.name == 'nt':
+            destiny_folder = destiny_folder.replace('/', '\\')
+            destiny_folder += '\\'
+
         file_name = "{}MARCAÇÕES_DE_{}-{}-{}_A_{}-{}-{}.xlsx".format(destiny_folder, start_date['day'], start_date['month'], start_date['year'], final_date['day'], final_date['month'], final_date['year'])
         workbook.save(file_name)
 
         if os.name == 'nt':
-            os.startfile(file_name)
+           os.startfile(file_name)
 
     def check_first_journey(self, first_journey, markings, errors, line, line_error):
         if first_journey != '' and first_journey > timedelta(hours=5):

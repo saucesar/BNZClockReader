@@ -2,7 +2,7 @@ from re import split
 import sys
 import PySimpleGUI as sg
 from os.path import dirname, join, abspath
-
+import logging
 sys.path.insert(0, abspath(join(dirname(__file__), '..')))
 sys.path.insert(0, abspath(join(dirname(__file__), 'database')))
 from facade import Facade
@@ -344,6 +344,7 @@ class CreateSpreadsheet(Screen):
 
             except Exception as e:
                 self.show_error(e.__str__())
+                logging.error(e)
 
         self.window.close()
 
