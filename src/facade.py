@@ -46,3 +46,19 @@ class Facade:
         
     def get_employees(self):
         return Employee.all_to_list()
+    
+    def get_auto_read(self):
+        try:
+            return KeyValue.get(KeyValue.key == KeyValue.AUTOREAD_AFD_FILE).value == 'True'
+        except:
+            KeyValue.create(key=KeyValue.AUTOREAD_AFD_FILE, value=True)
+            return True
+    
+    def set_auto_read(self, value):
+        try:
+            kv = KeyValue.get(KeyValue.key == KeyValue.AUTOREAD_AFD_FILE)
+            kv.value = value
+            kv.save()
+        except:
+            KeyValue.create(key=KeyValue.AUTOREAD_AFD_FILE, value=True)
+            return True

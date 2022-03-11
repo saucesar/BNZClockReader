@@ -18,7 +18,7 @@ class Screen:
         sg.popup_notify(title='Implement Show in {}'.format(self.__class__.__name__), display_duration_in_ms=1000, location=(500,100))
 
     def show_notifycation(self, msg, duration_in_seconds=1):
-        sg.popup_notify(title=msg, display_duration_in_ms=duration_in_seconds*1000, location=(500,100))
+        sg.popup_notify(title=msg, display_duration_in_ms=duration_in_seconds*1000, location=(500,150))
 
     def show_error(self, msg, duration_in_seconds=1):
         sg.popup_notify(title=msg, display_duration_in_ms=duration_in_seconds*1000, location=(500,100))
@@ -44,6 +44,7 @@ class MenuScreen(Screen):
     CREATE_SPREADSHEET = 'Gerar Planilha'
     EMPLOYEES = 'Funcionários'
     EXIT = 'Sair'
+    CONFIG = 'Configurações'
 
     def __init__(self) -> None:
         #sg.theme('Tan')
@@ -59,6 +60,8 @@ class MenuScreen(Screen):
         self.window = self.get_window()
         self.facade = Facade()
         TableManager().create_tables()
+        if self.facade.get_auto_read():
+            self.read_afd_file()
     
     def show(self):
         while True:
@@ -75,13 +78,13 @@ class MenuScreen(Screen):
                 self.show_about()
             elif event == MenuScreen.EMPLOYEES:
                 EmployeeMenu(self.facade).show()
+            elif event == MenuScreen.CONFIG:
+                ConfigScreen(self.facade).show()
             elif event == 'exit' or event == sg.WIN_CLOSED or event == MenuScreen.EXIT:
-                break
-
-        self.window.close()
+                sys.exit(0)
 
     def show_about(self):
-        sg.popup('About this program', 'Version 1.0', 'PySimpleGUI rocks...', location=(500,100))
+        sg.popup('Sobre este software', 'Versão 1.0.0', 'Desenvolvido por Saú Cesar<sau.cesarlima2013@gmail.com>', location=(500,100))
 
     def change_afd_file_path(self):
         try:
@@ -92,12 +95,45 @@ class MenuScreen(Screen):
                 self.facade.save_afd_file_path(afd_path)
                 self.show_error('Modificação salva\n Novo arquivo:{}'.format(afd_path))
         except Exception as e:
+            logging.error(e.__str__())
             sg.popup_error()
             self.show_notifycation(e.__str__())
 
+    def read_afd_file(self):
+        try:    
+            afd_path = self.facade.get_afd_file_path()
+            
+            if not afd_path in ['', None]:
+                progressBar = self.window.Element('progressBar')
+                progressBarText = self.window.Element('progressBarText')
+
+                self.show_notifycation('Lendo arquivo AFD.')
+                
+                progressBar.update(visible=True, current_count=0)
+                progressBarText.update(visible=True)
+                
+                self.facade.read_afd(afd_path, self.window['progressBar'])
+                self.facade.save_afd_file_path(afd_path)
+                self.show_notifycation('Leitura do arquivo concluída.')
+
+                progressBar.update(visible=False, current_count=0)
+                progressBarText.update(visible=True)
+            else:
+                ReadAFDScreen(self.facade).show()
+        except Exception as e:
+            logging.error(e.__str__())
+            if e.__class__.__name__ == 'KeyValueDoesNotExist':
+                ReadAFDScreen(self.facade, True).show()
+
     def get_layout(self):
         menu_options = [
-            ['Menu', [ MenuScreen.READ_AFD_FILE, MenuScreen.CHANGE_AFD_PATH, MenuScreen.CHOOSE_SPREADSHEET_PATH, MenuScreen.CREATE_SPREADSHEET, MenuScreen.ABOUT, MenuScreen.EXIT],],
+            [
+                'Menu',
+                [
+                    MenuScreen.CONFIG, MenuScreen.READ_AFD_FILE, MenuScreen.CHANGE_AFD_PATH,
+                    MenuScreen.CHOOSE_SPREADSHEET_PATH, MenuScreen.CREATE_SPREADSHEET, MenuScreen.ABOUT, MenuScreen.EXIT
+                ],
+            ],
         ]
 
         layout = [
@@ -116,17 +152,20 @@ class MenuScreen(Screen):
             [ sg.Text(text='- Geração planilhas', font=("Helvetica", 20)) ],
             [ sg.Text(text='- Calculo de horários', font=("Helvetica", 20)) ],
             [ sg.Text(text='- Erros de ponto', font=("Helvetica", 20)) ],
+            [ sg.ProgressBar(100, key='progressBar', visible=False, size=(30,30), bar_color=('green', 'gray'),) ],
+            [ sg.Text(text='Lendo arquivo AFD, Aguarde ...', key='progressBarText', font=("Helvetica", 10), visible=False) ],
         ]
         return layout
 
 class ReadAFDScreen(Screen):
 
-    def __init__(self, facade = None) -> None:
-            self.layout = self.get_layout()
-            self.title = 'ADF Read Screen'
-            self.window = self.get_window()
-            self.facade = facade
-            self.file_path = self.get_afd_path()
+    def __init__(self, facade, first_time = False) -> None:
+        self.layout = self.get_layout()
+        self.title = 'ADF Read Screen'
+        self.window = self.get_window()
+        self.facade = facade
+        self.first_time = first_time
+        self.file_path = self.get_afd_path()
 
     def set_size(self, size=(600, 250)):
         return super().set_size(size=size)
@@ -153,14 +192,16 @@ class ReadAFDScreen(Screen):
                 self.window.close()
             else:
                 try:
+                    if self.first_time:
+                        self.show_notifycation('A primeira leitura pode demorar\n alguns minutos.\nAguarde a finalização do processo.', 2)
                     self.window.Element('progressBar').update(visible=True, current_count=0)
-                    #self.show_notifycation('Lendo arquivo, por favor aguarde ...')
                     self.facade.read_afd(afd_path, self.window['progressBar'])
                     self.facade.save_afd_file_path(afd_path)
                     self.show_notifycation('Leitura do arquivo concluída.')
                     self.window.close()
                 except Exception as e:
-                     self.show_notifycation(e.__str__())
+                    logging.error(e.__str__())
+                    self.show_notifycation(e.__str__())
 
     def get_layout(self):
         return [
@@ -343,6 +384,7 @@ class CreateSpreadsheet(Screen):
                     break
 
             except Exception as e:
+                logging.error(e.__str__())
                 self.show_error(e.__str__())
                 logging.error(e)
 
@@ -493,6 +535,41 @@ class EmployeeShow(Screen):
         for i in range(10):
             graph.draw_rectangle(top_left=(10+i, 200), bottom_right=(120, 0), fill_color='green')
             graph.draw_text(text=str(i), location=(i*100+15, i+10),color='red')
-            
+
+class ConfigScreen(Screen):
+
+    AUTO_READ_AFD_FILE='auto_read_afd'
+
+    def __init__(self, facade):
+        self.facade = facade
+        self.layout = self.get_layout()
+        self.title = 'Configurações'
+        self.window = self.get_window()
+
+    def show(self):
+        while True:
+            event, values = self.window.read()
+            if event == 'ok':
+                self.facade.set_auto_read(values[ConfigScreen.AUTO_READ_AFD_FILE])
+                self.show_notifycation('Configurações atualizadas')
+            elif event == 'exit' or event == sg.WIN_CLOSED or event == MenuScreen.EXIT:
+                break
+
+        self.window.close()
+
+    def get_layout(self):
+        return [
+            [sg.Text(text="Configurações",font=30)],
+            [sg.Checkbox('Ler Arquivo AFD ao abrir programa?', key=ConfigScreen.AUTO_READ_AFD_FILE, default=self.facade.get_auto_read())],
+            [sg.HorizontalSeparator()],
+            [
+                self.oKbutton(btn_tooltype='Pressione ok Para ler o arquivo'),
+                self.exitButton(btn_tooltype='Sair desta tela.'),
+            ],
+        ]
+    
+    def set_size(self, size=(700, 400)):
+        return size
+
 if __name__ == '__main__':
     MenuScreen().show()

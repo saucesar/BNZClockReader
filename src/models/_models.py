@@ -78,6 +78,7 @@ class KeyValue(Model):
     AFD_LINES_READED_COUNT_KEY = 'AFD_LINES_READED_COUNT'
     AFD_FILE_PATH = 'DEFAULT_AFD_FILE_PATH'
     DEFAULT_SPREADSHEET_FOLDER = 'DEFAULT_SPREADSHEET_FOLDER'
+    AUTOREAD_AFD_FILE = 'AUTOREAD_AFD_FILE'
 
     class Meta:
         table_name = "key_values"
@@ -121,6 +122,7 @@ class Spreadsheet:
 
         markings.append(header)
         errors.append(header)
+        warnings.append(header)
 
         employees = Employee.select()
         total = employees.__len__()

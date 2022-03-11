@@ -36,7 +36,8 @@ class Main:
             readADF = ReadAFDFile(afd_path)
             readADF.read_and_save_in_database()
             self.console.log('\n')
-        except AttributeError:
+        except AttributeError as e:
+            logging.error(e.__str__())
             print(Panel('[red]Arquivo inválido!', title='Erro!', subtitle='tente novamente!'))
             sleep(3)
     
@@ -59,7 +60,8 @@ class Main:
                 kv.save()
                 print("[green]Arquivo modificado: {}".format(kv.value))
                 sleep(3)
-        except:
+        except Exception as e:
+            logging.error(e.__str__())
             print(Panel('[red]Arquivo inválido!', title='Erro!', subtitle='tente novamente!'))
             sleep(3)
 
