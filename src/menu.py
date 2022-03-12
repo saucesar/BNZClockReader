@@ -555,6 +555,7 @@ class ConfigScreen(Screen):
             if event == 'ok':
                 self.facade.set_auto_read(values[ConfigScreen.AUTO_READ_AFD_FILE])
                 self.show_notifycation('Configurações atualizadas')
+                break
             elif event == 'exit' or event == sg.WIN_CLOSED or event == MenuScreen.EXIT:
                 break
 
