@@ -179,14 +179,12 @@ class ReadAFDScreen(Screen):
         self.window.close()
 
     def get_afd_path(self):
-            try:
-                afd_path = self.facade.get_afd_file_path()
-            except:
+            afd_path = self.facade.get_afd_file_path()
+            
+            if afd_path == '' or afd_path is None:
                 file_select = FileSelect(facade=self.facade)
                 afd_path = file_select.show()
-
-                if afd_path == '' or afd_path is None:
-                    file_select.window.close()
+                file_select.window.close()
 
             if afd_path == '' or afd_path is None:
                 self.window.close()
