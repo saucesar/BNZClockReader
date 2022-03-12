@@ -104,6 +104,25 @@ class Spreadsheet:
     def get_last_day_of_month(year, month):
         return monthrange(year, month)[1]
 
+    def expand_colums(self, work_sheet):
+        for column_cells in work_sheet.columns:
+            width = 0
+            for cell in column_cells:
+                length = len(self.as_text(cell.value))
+                if length > width:
+                    width = length
+            
+            if width <= 7:
+                width+=2
+            
+            print(f'width: {width}')
+            work_sheet.column_dimensions[column_cells[0].column_letter].width = width
+
+    def as_text(self, value):
+        if value is None:
+            return ""
+        return str(value)
+
     def save_period_db_spreadsheet(self, start_date, final_date, destiny_folder):
         workbook = self.create_workbook()
         markings = workbook.active
@@ -169,6 +188,10 @@ class Spreadsheet:
         markings.add_table(self.create_table('TableStyleMedium9', 'Marcações', line))
         errors.add_table(self.create_table('TableStyleMedium9', 'Erros', line_error))
         warnings.add_table(self.create_table('TableStyleMedium9', 'Warnings', line_warning))
+
+        self.expand_colums(markings)
+        self.expand_colums(errors)
+        self.expand_colums(warnings)
 
         if os.name == 'posix':
             destiny_folder += '/'
