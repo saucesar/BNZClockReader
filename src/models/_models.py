@@ -115,7 +115,6 @@ class Spreadsheet:
             if width <= 7:
                 width+=2
             
-            print(f'width: {width}')
             work_sheet.column_dimensions[column_cells[0].column_letter].width = width
 
     def as_text(self, value):
