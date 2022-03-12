@@ -28,7 +28,10 @@ class Facade:
             kv.save()
     
     def get_afd_file_path(self):
-        return KeyValue.get(KeyValue.key == KeyValue.AFD_FILE_PATH).value
+        try:
+            return KeyValue.get(KeyValue.key == KeyValue.AFD_FILE_PATH).value
+        except:
+            return ''
 
     def save_spreadsheet_folder(self, spreadsheet_folder):
         try:
