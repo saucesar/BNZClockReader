@@ -15,19 +15,19 @@ class Screen:
     ASSET_VERSION='v2'
 
     def show(self):
-        sg.popup_notify(title='Implement Show in {}'.format(self.__class__.__name__), display_duration_in_ms=1000, location=(500,100))
+        sg.popup_notify(title='Implement Show in {}'.format(self.__class__.__name__), display_duration_in_ms=1000, location=(600, 100))
 
     def show_notifycation(self, msg, duration_in_seconds=1):
-        sg.popup_notify(title=msg, display_duration_in_ms=duration_in_seconds*1000, location=(500,150))
+        sg.popup_notify(title=msg, display_duration_in_ms=duration_in_seconds*1000, location=(600, 100))
 
     def show_error(self, msg, duration_in_seconds=1):
-        sg.popup_notify(title=msg, display_duration_in_ms=duration_in_seconds*1000, location=(500,100))
+        sg.popup_notify(title=msg, display_duration_in_ms=duration_in_seconds*1000, location=(600, 100))
 
-    def set_size(self, size=(700, 650)):
+    def set_size(self, size=(700, 600)):
         return size
 
     def get_window(self):
-        return sg.Window(self.title, self.layout, size=self.set_size(), margins=(50, 50), location=(300,100), element_justification='c', resizable=True, finalize=True)
+        return sg.Window(self.title, self.layout, size=self.set_size(), margins=(50, 50), location=(400, 50), element_justification='c', resizable=True, finalize=True)
 
     def oKbutton(self, btn_key='ok', btn_tooltype = ''):
         return sg.Button('', key=btn_key, tooltip=btn_tooltype, image_filename=f'src/assets/{Screen.ASSET_VERSION}/confirm-96px.png')
@@ -84,7 +84,7 @@ class MenuScreen(Screen):
                 sys.exit(0)
 
     def show_about(self):
-        sg.popup('Sobre este software', 'Versão 1.0.0', 'Desenvolvido por Saú Cesar<sau.cesarlima2013@gmail.com>', location=(500,100))
+        sg.popup('Sobre este software', 'Versão 1.0.0', 'Desenvolvido por Saú Cesar<sau.cesarlima2013@gmail.com>', location=(600,100))
 
     def change_afd_file_path(self):
         try:
@@ -117,7 +117,7 @@ class MenuScreen(Screen):
                 self.show_notifycation('Leitura do arquivo concluída.')
 
                 progressBar.update(visible=False, current_count=0)
-                progressBarText.update(visible=True)
+                progressBarText.update(visible=False)
             else:
                 ReadAFDScreen(self.facade).show()
         except Exception as e:
@@ -161,13 +161,13 @@ class ReadAFDScreen(Screen):
 
     def __init__(self, facade, first_time = False) -> None:
         self.layout = self.get_layout()
-        self.title = 'ADF Read Screen'
+        self.title = 'Leitura de AFD'
         self.window = self.get_window()
         self.facade = facade
         self.first_time = first_time
         self.file_path = self.get_afd_path()
 
-    def set_size(self, size=(600, 250)):
+    def set_size(self, size=(700, 250)):
         return super().set_size(size=size)
 
     def show(self):
@@ -212,10 +212,10 @@ class ReadAFDScreen(Screen):
 class FileSelect(Screen):
     
     def __init__(self, facade = None) -> None:
+        self.facade = facade
         self.layout = self.get_layout()
         self.title = 'Seleção de Arquivo'
         self.window = self.get_window()
-        self.facade = facade
 
     def show(self):
         while True:
@@ -223,7 +223,7 @@ class FileSelect(Screen):
 
             if event == 'ok':
                 if values['afd_file'] == '' or values['afd_file'] is None:
-                    sg.popup_notify(title='Selecione o arquivo', location=(500, 200))
+                    sg.popup_notify(title='Selecione o arquivo', location=(600, 100))
                 else:
                     self.window.close()
                     return values['afd_file']
@@ -231,12 +231,13 @@ class FileSelect(Screen):
                 self.window.close()
                 return None
     
-    def set_size(self, size=(500, 300)):
+    def set_size(self, size=(700, 300)):
         return super().set_size(size=size)
 
     def get_layout(self):
         return [
             [sg.Text(text="Seleção de Arquivo",font=30)],
+            [sg.Text(text=f"Arquivo atual: {self.facade.get_afd_file_path()}")],
             [
                 sg.Text(text="Selecione o arquivo AFD: "),
                 sg.FileBrowse(button_text='Selecione', key='afd_file', tooltip='Arquivo AFD', ),
@@ -250,10 +251,10 @@ class FileSelect(Screen):
 class FolderSelect(Screen):
     
     def __init__(self, facade = None) -> None:
+        self.facade = facade
         self.layout = self.get_layout()
         self.title = 'Pasta padrão para planilhas'
         self.window = self.get_window()
-        self.facade = facade
 
     def show(self):
         while True:
@@ -271,12 +272,13 @@ class FolderSelect(Screen):
 
         self.window.close()
         
-    def set_size(self, size=(500, 300)):
+    def set_size(self, size=(700, 300)):
         return super().set_size(size=size)
 
     def get_layout(self):
         return [
             [sg.Text(text="Selecione a Pasta",font=30)],
+            [sg.Text(text=f"Pasta atual: {self.facade.get_spreadsheet_folder()}")],
             [
                 sg.Text(text="Selecione a pasta: "),
                 sg.FolderBrowse(button_text='Selecione', key='spreadsheet_path', tooltip='Salvar a planilha em ...', ),
@@ -303,25 +305,26 @@ class CreateSpreadsheet(Screen):
         self.title = 'Gerar Planilha'
         self.window = self.get_window()
         self.facade = facade
+        self.destiny_folder = self.facade.get_spreadsheet_folder()
+
+    def check_destiny_folder(self):
+        if self.destiny_folder == '' or self.destiny_folder is None:
+            FolderSelect(self.facade).show()
+            self.destiny_folder = self.facade.get_spreadsheet_folder()
 
     def show(self):
         while True:
             event, values = self.window.read()
-            destiny_folder = self.facade.get_spreadsheet_folder()
+            self.check_destiny_folder()
             try:
                 if event == 'ok':
-                    
-                    if destiny_folder == '' or destiny_folder is None:
-                        FolderSelect(self.facade).show()
-                        destiny_folder = self.facade.get_spreadsheet_folder()
-
                     start_date = self.date_to_dict(values['start_date'])
                     final_date = self.date_to_dict(values['final_date'])
                             
                     self.window['progressBar'].update(visible=True, current_count=0)
 
-                    self.facade.create_spreadsheet(start_date, final_date, destiny_folder, self.window['progressBar'])
-                    sg.popup_notify(title='Planilha gerada\nSalva em {}'.format(destiny_folder), display_duration_in_ms=3000, location=(500,100))
+                    self.facade.create_spreadsheet(start_date, final_date, self.destiny_folder, self.window['progressBar'])
+                    sg.popup_notify(title='Planilha gerada\nSalva em {}'.format(self.destiny_folder), display_duration_in_ms=3000, location=(600,100))
 
                 elif event == CreateSpreadsheet.MONTH:
                     start_date =  self.date_to_dict(date.today().replace(day=1).__str__(), '-', year_index=0, day_index=2)
@@ -329,8 +332,8 @@ class CreateSpreadsheet(Screen):
 
                     self.window['progressBar'].update(visible=True, current_count=0)
 
-                    self.facade.create_spreadsheet(start_date, final_date, destiny_folder, self.window['progressBar'])
-                    sg.popup_notify(title='Planilha gerada\nSalva em {}'.format(destiny_folder), display_duration_in_ms=3000, location=(500,100))
+                    self.facade.create_spreadsheet(start_date, final_date, self.destiny_folder, self.window['progressBar'])
+                    sg.popup_notify(title='Planilha gerada\nSalva em {}'.format(self.destiny_folder), display_duration_in_ms=3000, location=(600,100))
         
                 elif event == CreateSpreadsheet.LAST_MONTH:
                     start_date =  self.date_to_dict(date.today().replace(day=1, month=date.today().month-1).__str__(), '-', year_index=0, day_index=2)
@@ -338,24 +341,24 @@ class CreateSpreadsheet(Screen):
                     
                     self.window['progressBar'].update(visible=True, current_count=0)
 
-                    self.facade.create_spreadsheet(start_date, final_date, destiny_folder, self.window['progressBar'])
-                    sg.popup_notify(title='Planilha gerada\nSalva em {}'.format(destiny_folder), display_duration_in_ms=3000, location=(500,100))
+                    self.facade.create_spreadsheet(start_date, final_date, self.destiny_folder, self.window['progressBar'])
+                    sg.popup_notify(title='Planilha gerada\nSalva em {}'.format(self.destiny_folder), display_duration_in_ms=3000, location=(600,100))
                 
                 elif event == CreateSpreadsheet.TODAY:
                     today =  self.date_to_dict(date.today().__str__(), '-', year_index=0, day_index=2)
 
                     self.window['progressBar'].update(visible=True, current_count=0)
 
-                    self.facade.create_spreadsheet(today, today, destiny_folder, self.window['progressBar'])
-                    sg.popup_notify(title='Planilha gerada\nSalva em {}'.format(destiny_folder), display_duration_in_ms=3000, location=(500,100))
+                    self.facade.create_spreadsheet(today, today, self.destiny_folder, self.window['progressBar'])
+                    sg.popup_notify(title='Planilha gerada\nSalva em {}'.format(self.destiny_folder), display_duration_in_ms=3000, location=(600,100))
 
                 elif event == CreateSpreadsheet.YESTERDAY:
                     yeasterday =  self.date_to_dict((date.today() - timedelta(days=1)).__str__(), '-', year_index=0, day_index=2)
 
                     self.window['progressBar'].update(visible=True, current_count=0)
 
-                    self.facade.create_spreadsheet(yeasterday, yeasterday, destiny_folder, self.window['progressBar'])
-                    sg.popup_notify(title='Planilha gerada\nSalva em {}'.format(destiny_folder), display_duration_in_ms=3000, location=(500,100))
+                    self.facade.create_spreadsheet(yeasterday, yeasterday, self.destiny_folder, self.window['progressBar'])
+                    sg.popup_notify(title='Planilha gerada\nSalva em {}'.format(self.destiny_folder), display_duration_in_ms=3000, location=(600,100))
 
                 elif event == CreateSpreadsheet.LAST_WEEK:
                     start = date.today() - timedelta(days=date.today().weekday()) - timedelta(days=7)
@@ -365,8 +368,8 @@ class CreateSpreadsheet(Screen):
 
                     self.window['progressBar'].update(visible=True, current_count=0)
 
-                    self.facade.create_spreadsheet(start_date, final_date, destiny_folder, self.window['progressBar'])
-                    sg.popup_notify(title='Planilha gerada\nSalva em {}'.format(destiny_folder), display_duration_in_ms=3000, location=(500,100))
+                    self.facade.create_spreadsheet(start_date, final_date, self.destiny_folder, self.window['progressBar'])
+                    sg.popup_notify(title='Planilha gerada\nSalva em {}'.format(self.destiny_folder), display_duration_in_ms=3000, location=(600,100))
 
                 elif event == CreateSpreadsheet.CURRENT_WEEK:
                     start = date.today() - timedelta(days=date.today().weekday()+1)
@@ -377,8 +380,8 @@ class CreateSpreadsheet(Screen):
 
                     self.window['progressBar'].update(visible=True, current_count=0)
 
-                    self.facade.create_spreadsheet(start_date, final_date, destiny_folder, self.window['progressBar'])
-                    sg.popup_notify(title='Planilha gerada\nSalva em {}'.format(destiny_folder), display_duration_in_ms=3000, location=(500,100))
+                    self.facade.create_spreadsheet(start_date, final_date, self.destiny_folder, self.window['progressBar'])
+                    sg.popup_notify(title='Planilha gerada\nSalva em {}'.format(self.destiny_folder), display_duration_in_ms=3000, location=(600,100))
 
                 elif event == 'exit' or event == sg.WIN_CLOSED:
                     break
@@ -517,10 +520,10 @@ class EmployeeShow(Screen):
     def get_layout(self):
         layout = [
             [
-                sg.Text(self.employee[1])
+                #sg.Text(self.employee[1])
             ],
             [
-                sg.Graph((500,500), (-250,-250), (500, 500), key='graph', expand_x=True, expand_y=True)
+                #sg.Graph((500,500), (-250,-250), (500, 500), key='graph', expand_x=True, expand_y=True)
             ],
             [
                 #self.oKbutton(btn_tooltype='Pressione ok para gerar a planilha'),
