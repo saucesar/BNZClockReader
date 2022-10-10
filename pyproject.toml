@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "bnzclockpoint"
+version = "0.1.0"
+description = ""
+authors = ["saucesar <sau.cesarlima2013@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "3.9.12"
+rich = "^12.6.0"
+PySimpleGUI = "^4.60.3"
+peewee = "^3.15.3"
+openpyxl = "^3.0.10"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
