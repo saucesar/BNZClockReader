@@ -10,3 +10,5 @@ src/build/*
 *.log
 *.xlsx
 *.spec
+*.lock
+.vscode
